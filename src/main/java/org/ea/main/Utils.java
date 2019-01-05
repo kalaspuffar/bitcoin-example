@@ -35,13 +35,17 @@ public class Utils {
         return res;
     }
 
+    public static byte[] dhash(byte[] message) throws Exception {
+        return sha256(sha256(message));
+    }
+
     public static byte[] sha256(byte[] message) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         return digest.digest(message);
     }
 
     public static byte[] hashValue(byte[] message) throws Exception {
-        return firstBytes(sha256(sha256(message)), 4);
+        return firstBytes(dhash(message), 4);
     }
 
     public static byte[] combine(byte[] a, byte b) {
@@ -108,5 +112,24 @@ public class Utils {
             }
         }
         return hs;
+    }
+
+    public static void main(String[] args) {
+
+        String hash = "A1 21 3B D4 75 4A 66 06 44 4B 97 B5 E8 C4 6E 9B 78 32 77 3F \n" +
+                "F4 34 BD 5F 87 AC 45 BC 00 00 00 00 D1 E7 02 69 86 A9 CD 24 \n" +
+                "7B 5B 85 A3 F3 0E CB AB B6 D6 18 40 D0 AB B8 1F 90 5C 41 1D \n" +
+                "5F C1 45 E8 31 E8 49 4D FF FF 00 1D 00 41 38 F9 00 01 00 00 \n" +
+                "00 ";
+
+        byte[] msgByte = hex2Byte(
+                hash
+                    .replaceAll("[\n ]", "")
+        );
+        try {
+            System.out.println(byte2hex(dhash(msgByte)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

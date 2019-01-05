@@ -85,9 +85,15 @@ public class BitcoinTest {
 
                 Reply reply = Reply.build(currentBlock);
                 if(reply instanceof Version) {
-                    Verack verackMsg = new Verack();
-                    verackMsg.setNetwork(network);
+                    Verack verackMsg = new Verack(network);
                     out.write(verackMsg.getByteData());
+                    out.flush();
+                }
+                if(reply instanceof Verack) {
+                    GetHeaders getHeadersMsg = new GetHeaders(network);
+                    getHeadersMsg.addHash("ab07c7b65db342c087cf6a112a7e972697985ba5e6d74f7292e65c8581ddea5e");
+                    Utils.printArray("getHeadersMsg", getHeadersMsg.getByteData());
+                    out.write(getHeadersMsg.getByteData());
                     out.flush();
                 }
                 if(reply instanceof Ping) {

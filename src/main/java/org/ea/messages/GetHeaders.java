@@ -10,9 +10,14 @@ import java.util.Arrays;
 import java.util.List;
 
 public class GetHeaders extends Reply {
-    private int version;
+    private int version = 1;
     private long hashCount;
     private List<String> hashes = new ArrayList<>();
+
+    public GetHeaders(int network) {
+        super.setCommand("getheaders");
+        super.setNetwork(network);
+    }
 
     protected GetHeaders(byte[] msg) throws Exception{
         super(msg);
@@ -30,5 +35,31 @@ public class GetHeaders extends Reply {
         }
 
         System.out.println("Got a request for " + hashes.size() + " num of hashes");
+    }
+
+    public byte[] getByteData() throws Exception {
+        byte[] res = new byte[0];
+        res = Utils.combine(res, Utils.getIntToBytes(this.version));
+
+        byte[] hash_stop = new byte[32];
+        Arrays.fill(hash_stop, (byte)0);
+        if(hashes.size() == 0) {
+            res = Utils.combine(res, (byte) 1);
+            res = Utils.combine(res, hash_stop);
+            res = Utils.combine(res, hash_stop);
+        } else {
+            res = Utils.combine(res, (byte) hashes.size());
+            for(String hash : hashes) {
+                res = Utils.combine(res, Utils.hex2Byte(hash));
+            }
+        }
+
+        byte[] header = super.getByteData(res);
+
+        return Utils.combine(header, res);
+    }
+
+    public void addHash(String hash) {
+        hashes.add(hash);
     }
 }

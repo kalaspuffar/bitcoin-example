@@ -22,6 +22,8 @@ public class Reply {
                 return new Addr(data);
             case "feefilter":
                 return new FeeFilter(data);
+            case "headers":
+                return new Headers(data);
             case "getheaders":
                 return new GetHeaders(data);
             case "inv":

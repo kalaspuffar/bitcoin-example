@@ -1,8 +1,9 @@
 package org.ea.messages;
 
 public class Verack extends Reply {
-    public Verack() {
+    public Verack(int network) {
         super.setCommand("verack");
+        super.setNetwork(network);
     }
 
     protected Verack(byte[] data) throws Exception{
