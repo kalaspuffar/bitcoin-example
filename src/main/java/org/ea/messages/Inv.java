@@ -6,6 +6,8 @@ public class Inv extends Reply {
     protected Inv(byte[] data) throws Exception{
         super(data);
         nonce = this.data;
+
+        System.out.println("INV");
     }
 
     public byte[] getNonce() {

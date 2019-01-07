@@ -1,7 +1,5 @@
 package org.ea.main;
 
-import org.ea.messages.data.VarLen;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
@@ -116,16 +114,22 @@ public class Utils {
 
     public static void main(String[] args) {
 
-        String hash = "A1 21 3B D4 75 4A 66 06 44 4B 97 B5 E8 C4 6E 9B 78 32 77 3F \n" +
-                "F4 34 BD 5F 87 AC 45 BC 00 00 00 00 D1 E7 02 69 86 A9 CD 24 \n" +
-                "7B 5B 85 A3 F3 0E CB AB B6 D6 18 40 D0 AB B8 1F 90 5C 41 1D \n" +
-                "5F C1 45 E8 31 E8 49 4D FF FF 00 1D 00 41 38 F9 00 01 00 00 \n" +
-                "00 ";
+        String hash = "43 49 7F D7 F8 26 95 71 08 F4 A3 0F D9 CE C3 AE BA 79 97 20 \n" +
+                "84 E9 0E AD 01 EA 33 09 00 00 00 00 BA C8 B0 FA 92 7C 0A C8 \n" +
+                "23 42 87 E3 3C 5F 74 D3 8D 35 48 20 E2 47 56 AD 70 9D 70 38 \n" +
+                "FC 5F 31 F0 20 E7 49 4D FF FF 00 1D 03 E4 B6 72 00 01 00 00";
+
+        String bla = "F8 26 95 71 08 F4 A3 0F D9 CE C3 AE BA 79 97 20 84 E9 0E AD 01 EA 33 09 00 00 00 00 BA C8 B0 FA";
+        System.out.println(bla      .replaceAll("[\n ]", ""));
+
 
         byte[] msgByte = hex2Byte(
                 hash
                     .replaceAll("[\n ]", "")
         );
+
+
+
         try {
             System.out.println(byte2hex(dhash(msgByte)));
         } catch (Exception e) {

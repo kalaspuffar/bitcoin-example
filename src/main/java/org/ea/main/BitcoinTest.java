@@ -91,8 +91,7 @@ public class BitcoinTest {
                 }
                 if(reply instanceof Verack) {
                     GetHeaders getHeadersMsg = new GetHeaders(network);
-                    getHeadersMsg.addHash("ab07c7b65db342c087cf6a112a7e972697985ba5e6d74f7292e65c8581ddea5e");
-                    Utils.printArray("getHeadersMsg", getHeadersMsg.getByteData());
+                    getHeadersMsg.addHash("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
                     out.write(getHeadersMsg.getByteData());
                     out.flush();
                 }

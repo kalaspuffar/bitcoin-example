@@ -2,7 +2,7 @@ package org.ea.messages;
 
 import org.ea.main.Utils;
 import org.ea.messages.data.NetAddr;
-import org.ea.messages.data.VarLen;
+import org.ea.messages.data.VarInt;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -67,7 +67,7 @@ public class Version extends Reply {
         );
         this.nodeId = Arrays.copyOfRange(data, 72, 80);
 
-        VarLen len = new VarLen(Arrays.copyOfRange(data, 80, data.length));
+        VarInt len = new VarInt(Arrays.copyOfRange(data, 80, data.length));
         subversion = new String(
                 Arrays.copyOfRange(data, 80 + len.getNumBytes(), 80 + len.getNumBytes() + (int)len.getValue())
         );

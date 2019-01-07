@@ -1,7 +1,7 @@
 package org.ea.messages;
 
-import org.ea.main.Utils;
-import org.ea.messages.data.VarLen;
+import org.ea.messages.data.Header;
+import org.ea.messages.data.VarInt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,26 +10,26 @@ import java.util.List;
 public class Headers extends Reply {
     private long numHeaders;
 
-    private List<byte[]> headers = new ArrayList<>();
+    private List<Header> headers = new ArrayList<>();
 
     protected Headers(byte[] msg) throws Exception{
         super(msg);
         System.out.println("HEADERS");
 
-        VarLen count = new VarLen(data);
+        VarInt count = new VarInt(data);
         numHeaders = count.getValue();
 
         System.out.println("Got some headers " + numHeaders);
 
-        int currentBlockPlace = count.getNumBytes() + 4;
+        int currentBlockPlace = count.getNumBytes();
         for(int i=0; i<numHeaders; i++) {
             headers.add(
-                Arrays.copyOfRange(data, currentBlockPlace, currentBlockPlace+81)
+                new Header(Arrays.copyOfRange(data, currentBlockPlace, currentBlockPlace+81))
             );
             currentBlockPlace += 81;
         }
 
-        Utils.printArray("hash", headers.get(0));
+        for(Header h : headers) h.print();
     }
 }
 
