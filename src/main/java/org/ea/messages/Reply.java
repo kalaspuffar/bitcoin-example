@@ -20,6 +20,8 @@ public class Reply {
         switch (command) {
             case "addr":
                 return new Addr(data);
+            case "block":
+                return new Block(data);
             case "feefilter":
                 return new FeeFilter(data);
             case "headers":
@@ -38,6 +40,8 @@ public class Reply {
                 return new SendHeaders(data);
             case "sendcmpct":
                 return new SendCmpCt(data);
+            case "tx":
+                return new Tx(data);
             case "reject":
                 return new Reject(data);
             default:

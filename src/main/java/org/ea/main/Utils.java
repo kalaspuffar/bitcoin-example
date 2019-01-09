@@ -136,4 +136,13 @@ public class Utils {
             e.printStackTrace();
         }
     }
+
+    public static int indexOf(byte[] haystack, byte needle) {
+        int index = 0;
+        for(byte b : haystack) {
+            if(b == needle) return index;
+            index++;
+        }
+        return -1;
+    }
 }

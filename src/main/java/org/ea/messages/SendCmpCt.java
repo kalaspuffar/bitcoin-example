@@ -18,5 +18,7 @@ public class SendCmpCt extends Reply {
                 Arrays.copyOfRange(data, 1, 9)
         ).order(ByteOrder.LITTLE_ENDIAN)
                 .getLong();
+
+        System.out.println("SendCmpCt");
     }
 }

@@ -8,6 +8,8 @@ public class SendHeaders extends Reply {
 
     protected SendHeaders(byte[] msg) throws Exception{
         super(msg);
+
+        System.out.println("SendHeaders");
     }
 
     public byte[] getByteData() throws Exception {
