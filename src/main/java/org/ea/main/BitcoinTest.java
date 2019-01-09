@@ -100,19 +100,22 @@ public class BitcoinTest {
 
             InetAddress dnsresult[] = InetAddress.getAllByName("seed.tbtc.petertodd.org");
             String ip = null;
-            byte[] ipAddr = null;
-            for (int i = 0; i < dnsresult.length; i++) {
-                if(dnsresult[i].getHostAddress().startsWith("1")) {
-                    ip = dnsresult[i].getHostAddress();
-
-                    ipAddr = dnsresult[i].getAddress();
+            short default_port = 18333;
+            if(addresses.size() == 0) {
+                for (int i = 0; i < dnsresult.length; i++) {
+                    if (dnsresult[i].getHostAddress().startsWith("1")) {
+                        ip = dnsresult[i].getHostAddress();
+                    }
                 }
+            } else {
+                int addressId = new Random().nextInt(addresses.size());
+                NetAddr netAddr = addresses.get(addressId);
+                ip = netAddr.getHostIPv4();
+                default_port = netAddr.getPort();
             }
 
             long randomId = new Random().nextLong();
 
-            short default_port = 18333;
-            InetAddress localHost = InetAddress.getLocalHost();
 
             clientSocket = new Socket(ip, default_port);
             OutputStream out = clientSocket.getOutputStream();

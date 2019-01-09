@@ -112,13 +112,7 @@ public class NetAddr {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.ipv4[0] & 0xFF);
-        sb.append(".");
-        sb.append(this.ipv4[1] & 0xFF);
-        sb.append(".");
-        sb.append(this.ipv4[2] & 0xFF);
-        sb.append(".");
-        sb.append(this.ipv4[3] & 0xFF);
+        sb.append(getHostIPv4());
         sb.append(":");
         sb.append(this.port);
         return sb.toString();
@@ -126,15 +120,7 @@ public class NetAddr {
 
     public JSONObject getJSONObject() {
         JSONObject obj = new JSONObject();
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.ipv4[0] & 0xFF);
-        sb.append(".");
-        sb.append(this.ipv4[1] & 0xFF);
-        sb.append(".");
-        sb.append(this.ipv4[2] & 0xFF);
-        sb.append(".");
-        sb.append(this.ipv4[3] & 0xFF);
-        obj.put("host", sb.toString());
+        obj.put("host", getHostIPv4());
         obj.put("port", port);
         return obj;
     }
@@ -153,5 +139,17 @@ public class NetAddr {
         int result = Objects.hash(getPort());
         result = 31 * result + Arrays.hashCode(getIpv4());
         return result;
+    }
+
+    public String getHostIPv4() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.ipv4[0] & 0xFF);
+        sb.append(".");
+        sb.append(this.ipv4[1] & 0xFF);
+        sb.append(".");
+        sb.append(this.ipv4[2] & 0xFF);
+        sb.append(".");
+        sb.append(this.ipv4[3] & 0xFF);
+        return sb.toString();
     }
 }
