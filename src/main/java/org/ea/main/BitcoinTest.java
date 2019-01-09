@@ -2,6 +2,10 @@ package org.ea.main;
 
 import org.ea.messages.*;
 import org.ea.messages.data.InvVector;
+import org.ea.messages.data.NetAddr;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -28,9 +32,72 @@ public class BitcoinTest {
     }
 
     private static int network = 0x0709110B;
+    private static List<NetAddr> addresses = new ArrayList<>();
+    private static List<InvVector> invVectors = new ArrayList<>();
+
+    public static void readData(File dbFile) throws Exception {
+        JSONObject jsonDB = (JSONObject)
+                JSONValue.parse(new FileReader(dbFile));
+        if(jsonDB == null) jsonDB = new JSONObject();
+
+        if(jsonDB.containsKey("addr")) {
+            JSONArray addrArr = (JSONArray) jsonDB.get("addr");
+            for (Object addr : addrArr) {
+                addresses.add(new NetAddr(
+                        (JSONObject) addr
+                ));
+            }
+        }
+
+        if(jsonDB.containsKey("inv")) {
+            JSONArray invArr = (JSONArray) jsonDB.get("inv");
+            for (Object iv : invArr) {
+                invVectors.add(new InvVector(
+                        (JSONObject) iv
+                ));
+            }
+        }
+
+        System.out.println("Read " + addresses.size() + " addresses");
+        System.out.println("Read " + invVectors.size() + " vectors");
+    }
+
+    private static void writeData(File dbFile) throws Exception {
+        JSONObject jsonDB = (JSONObject)
+                JSONValue.parse(new FileReader(dbFile));
+
+        jsonDB.put("addr", new JSONArray());
+        JSONArray addressesJson = (JSONArray) jsonDB.get("addr");
+        for(NetAddr addr : addresses) {
+            addressesJson.add(addr.getJSONObject());
+        }
+        jsonDB.put("inv", new JSONArray());
+        JSONArray invJson = (JSONArray) jsonDB.get("inv");
+        for(InvVector iv : invVectors) {
+            invJson.add(iv.getJSONObject());
+        }
+
+        FileWriter fw = new FileWriter(dbFile);
+        if (jsonDB != null) {
+            jsonDB.writeJSONString(fw);
+        }
+        fw.flush();
+        fw.close();
+
+        System.out.println("Wrote " + addresses.size() + " addresses");
+        System.out.println("Wrote " + invVectors.size() + " vectors");
+    }
 
     public static void main(String[] args) {
+        File dataDir = new File("data");
+        File dbFile = new File(dataDir, "db.json");
+
         try {
+            if(!dataDir.exists()) dataDir.mkdir();
+            if(!dbFile.exists()) dbFile.createNewFile();
+
+            readData(dbFile);
+
             InetAddress dnsresult[] = InetAddress.getAllByName("seed.tbtc.petertodd.org");
             String ip = null;
             byte[] ipAddr = null;
@@ -114,13 +181,15 @@ public class BitcoinTest {
                     }
 
                     if (reply instanceof Inv) {
-
+                        invVectors.addAll(((Inv)reply).getInvVectors());
+/*
                         GetHeaders getHeadersMsg = new GetHeaders(network);
                         for (InvVector iv : ((Inv) reply).getInvVectors()) {
                             getHeadersMsg.addHash(iv.getHash());
                         }
                         out.write(getHeadersMsg.getByteData());
                         out.flush();
+*/
 /*
                         GetData getData = new GetData(network);
                         for (InvVector iv : ((Inv) reply).getInvVectors()) {
@@ -130,17 +199,28 @@ public class BitcoinTest {
                         out.flush();
 */
                     }
+
+                    if (reply instanceof Addr) {
+                        addresses.addAll(((Addr)reply).getAddresses());
+                    }
+
                     if (reply instanceof Reject) {
                         System.out.println(reply);
                     }
                 }
+                writeData(dbFile);
             }
             is.close();
             out.close();
             clientSocket.close();
-
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            try {
+                writeData(dbFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

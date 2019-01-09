@@ -1,10 +1,12 @@
 package org.ea.messages.data;
 
 import org.ea.main.Utils;
+import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class NetAddr {
     private int time;
@@ -21,6 +23,12 @@ public class NetAddr {
         ipv6[11] = (byte)0xFF;
         Arrays.fill(ipv4, (byte)0);
         this.network_service = 1;
+    }
+
+    public NetAddr(JSONObject jsonObject) {
+        this();
+        setIpv4((String)jsonObject.get("host"));
+        setPort(((Long)jsonObject.get("port")).shortValue());
     }
 
     public NetAddr(byte[] data) {
@@ -86,6 +94,13 @@ public class NetAddr {
         this.port = port;
     }
 
+    public void setIpv4(String addr) {
+        String[] addrParts = addr.split("\\.");
+        for(int i=0; i<addrParts.length; i++) {
+            this.ipv4[i] = (byte)Integer.parseInt(addrParts[i]);
+        }
+    }
+
     public byte[] getNetworkAddress() {
         byte[] res = new byte[0];
         res = Utils.combine(res, Utils.getLongToBytes(this.network_service));
@@ -107,5 +122,36 @@ public class NetAddr {
         sb.append(":");
         sb.append(this.port);
         return sb.toString();
+    }
+
+    public JSONObject getJSONObject() {
+        JSONObject obj = new JSONObject();
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.ipv4[0] & 0xFF);
+        sb.append(".");
+        sb.append(this.ipv4[1] & 0xFF);
+        sb.append(".");
+        sb.append(this.ipv4[2] & 0xFF);
+        sb.append(".");
+        sb.append(this.ipv4[3] & 0xFF);
+        obj.put("host", sb.toString());
+        obj.put("port", port);
+        return obj;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NetAddr netAddr = (NetAddr) o;
+        return getPort() == netAddr.getPort() &&
+                Arrays.equals(getIpv4(), netAddr.getIpv4());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(getPort());
+        result = 31 * result + Arrays.hashCode(getIpv4());
+        return result;
     }
 }

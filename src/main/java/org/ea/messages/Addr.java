@@ -2,16 +2,20 @@ package org.ea.messages;
 
 import org.ea.messages.data.NetAddr;
 import org.ea.messages.data.VarInt;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class Addr extends Reply {
+    private List<NetAddr> addresses = new ArrayList<>();
+
     protected Addr(byte[] msg) throws Exception{
         super(msg);
         VarInt numAddr = new VarInt(data);
-        List<NetAddr> addresses = new ArrayList<>();
         int current = numAddr.getNumBytes();
         for(int i=0; i<numAddr.getValue(); i++) {
             addresses.add(new NetAddr(
@@ -23,5 +27,9 @@ public class Addr extends Reply {
         for(NetAddr addr : addresses) {
             System.out.println(addr.toString());
         }
+    }
+
+    public Collection<? extends NetAddr> getAddresses() {
+        return addresses;
     }
 }
