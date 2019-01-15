@@ -1,14 +1,16 @@
 package org.ea.messages.data;
 
 import org.ea.main.Utils;
+import org.ea.messages.Inv;
 import org.json.simple.JSONObject;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class InvVector {
+public class InvVector implements Comparable<InvVector> {
 
     /*
 4	type	uint32_t	Identifies the object type linked to this inventory
@@ -83,5 +85,18 @@ public class InvVector {
         int result = Objects.hash(getId());
         result = 31 * result + getHash().hashCode();
         return result;
+    }
+
+    @Override
+    public int compareTo(InvVector o) {
+
+        BigInteger other = new BigInteger(1,
+            Utils.reverse(o.hash)
+        );
+        BigInteger curr = new BigInteger(1,
+            Utils.reverse(this.hash)
+        );
+
+        return curr.compareTo(other);
     }
 }

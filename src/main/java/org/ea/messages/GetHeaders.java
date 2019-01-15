@@ -46,17 +46,12 @@ public class GetHeaders extends Reply {
 
         byte[] hash_stop = new byte[32];
         Arrays.fill(hash_stop, (byte)0);
-        if(hashes.size() == 0) {
-            res = Utils.combine(res, (byte) 1);
-            res = Utils.combine(res, hash_stop);
-        } else {
-            res = Utils.combine(res, (byte) hashes.size());
-            for(String hash : hashes) {
-                res = Utils.combine(res, Utils.hex2Byte(hash));
-            }
+        res = Utils.combine(res, (byte) hashes.size());
+        for(String hash : hashes) {
+            res = Utils.combine(res, Utils.hex2Byte(hash));
         }
 
-        //res = Utils.combine(res, hash_stop);
+        res = Utils.combine(res, hash_stop);
         Utils.printArray("getHeadersMsg", res);
 
         byte[] header = super.getByteData(res);
