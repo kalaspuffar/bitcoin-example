@@ -14,10 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class BitcoinTest {
     private static Socket clientSocket;
@@ -32,8 +29,8 @@ public class BitcoinTest {
     }
 
     private static int network = 0x0709110B;
-    private static List<NetAddr> addresses = new ArrayList<>();
-    private static List<InvVector> invVectors = new ArrayList<>();
+    private static Set<NetAddr> addresses = new HashSet<>();
+    private static Set<InvVector> invVectors = new HashSet<>();
 
     public static void readData(File dbFile) throws Exception {
         JSONObject jsonDB = (JSONObject)
@@ -102,6 +99,14 @@ public class BitcoinTest {
 
             readData(dbFile);
 
+            if(true) {
+                List<InvVector> values = Utils.blockLocator(invVectors);
+                for(InvVector iv : values) {
+                    iv.print();
+                }
+                System.exit(0);
+            }
+
             InetAddress dnsresult[] = InetAddress.getAllByName("seed.tbtc.petertodd.org");
             String ip = null;
             short default_port = 18333;
@@ -113,7 +118,9 @@ public class BitcoinTest {
                 }
             } else {
                 int addressId = new Random().nextInt(addresses.size());
-                NetAddr netAddr = addresses.get(addressId);
+                NetAddr netAddr = addresses.toArray(
+                        new NetAddr[addresses.size()]
+                )[addressId];
                 ip = netAddr.getHostIPv4();
                 default_port = netAddr.getPort();
             }
@@ -169,27 +176,38 @@ public class BitcoinTest {
                         out.flush();
                     }
                     if (reply instanceof Verack) {
-    /*
                         SendHeaders sendHeaders = new SendHeaders(network);
                         out.write(sendHeaders.getByteData());
                         out.flush();
+                    }
+
+                    if(reply instanceof SendHeaders) {
+                        /*
                         GetHeaders getHeadersMsg = new GetHeaders(network);
-                        getHeadersMsg.addHash("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+                        getHeadersMsg.addHash("dde7f4b78f3b38d6262e16ad6c9ae0c567c23c6735563abba5a5bec1f103506b");
                         out.write(getHeadersMsg.getByteData());
                         out.flush();
-    */
 
-                        Utils.
-                        invVectors
+
+                        //                    1 - b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f
+                        //                    2 - 39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000
+                        */
 
                         GetBlocks getHeadersMsg = new GetBlocks(network);
                         // getHeadersMsg.addHash("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
                         out.write(getHeadersMsg.getByteData());
                         out.flush();
 
-                        //                    1 - b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f
-                        //                    2 - 39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000
-                    }
+/*
+                        GetData getData = new GetData(network);
+                        for (InvVector iv : invVectors) {
+                            getData.addVector(iv);
+                        }
+                        out.write(getData.getByteData());
+                        out.flush();
+                        */
+                   }
+
                     if (reply instanceof Ping) {
                         out.write(((Ping) reply).getPongData());
                         out.flush();

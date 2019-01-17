@@ -1,9 +1,11 @@
 package org.ea.main;
 
+import org.ea.messages.data.InvVector;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
-import java.util.Arrays;
+import java.util.*;
 
 public class Utils {
     public static void printArray(String name, byte[] sendMessage) {
@@ -144,5 +146,24 @@ public class Utils {
             index++;
         }
         return -1;
+    }
+
+    public static List<InvVector> blockLocator(Set<InvVector> hashes) {
+        List<InvVector> sortedIndexes = new ArrayList<>();
+        sortedIndexes.addAll(hashes);
+        Collections.sort(sortedIndexes);
+        List<InvVector> indexes = new ArrayList<>();
+        int step = 1;
+
+        // Start at the top of the chain and work backwards.
+        for (int index = sortedIndexes.size() - 1; index > 0; index -= step)
+        {
+            // Push top 10 indexes first, then back off exponentially.
+            if (indexes.size() >= 10)
+                step *= 2;
+
+            indexes.add(sortedIndexes.get(index));
+        }
+        return indexes;
     }
 }
