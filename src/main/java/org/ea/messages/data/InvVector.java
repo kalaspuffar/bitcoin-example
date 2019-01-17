@@ -90,12 +90,29 @@ public class InvVector implements Comparable<InvVector> {
     @Override
     public int compareTo(InvVector o) {
 
+        if(getId() > o.getId()) {
+            return 1;
+        }
+        if(getId() < o.getId()) {
+            return -1;
+        }
+
+        System.out.println(Utils.byte2hex(o.hash));
+
         BigInteger other = new BigInteger(1,
             Utils.reverse(o.hash)
         );
         BigInteger curr = new BigInteger(1,
             Utils.reverse(this.hash)
         );
+
+        if(curr.compareTo(other) > 0) {
+            System.err.println(curr.toString() + " > " + other.toString());
+        } else if(curr.compareTo(other) < 0) {
+            System.err.println(curr.toString() + " < " + other.toString());
+        } else {
+            System.err.println(curr.toString() + " == " + other.toString());
+        }
 
         return curr.compareTo(other);
     }

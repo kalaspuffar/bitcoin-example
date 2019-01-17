@@ -8,6 +8,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -98,6 +99,24 @@ public class BitcoinTest {
             if(!dbFile.exists()) dbFile.createNewFile();
 
             readData(dbFile);
+
+            if(true) {
+
+//                byte[] one = Utils.hex2Byte("f7b2f9d9a6f44012728b6e09c48750838780f1e1cac9cbaa09e0114200000000");
+//                byte[] two = Utils.hex2Byte("d8f8a6686ecdeac529caa3ab9ecfa84a5fb62b06849ee09b8331d89e00000000");
+                byte[] one = Utils.hex2Byte("b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f");
+                byte[] two = Utils.hex2Byte("39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000");
+                BigInteger oneInt = new BigInteger(1, Utils.reverse(one));
+                BigInteger twoInt = new BigInteger(1, Utils.reverse(two));
+                if(oneInt.compareTo(twoInt) > 0) {
+                    System.out.println(Utils.byte2hex(one) + " > " + Utils.byte2hex(two));
+                } else if(oneInt.compareTo(twoInt) < 0) {
+                    System.out.println(Utils.byte2hex(one) + " < " + Utils.byte2hex(two));
+                } else {
+                    System.out.println(Utils.byte2hex(one) + " == " + Utils.byte2hex(two));
+                }
+                System.exit(0);
+            }
 
             if(true) {
                 List<InvVector> values = Utils.blockLocator(invVectors);
@@ -192,6 +211,8 @@ public class BitcoinTest {
                         //                    1 - b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f
                         //                    2 - 39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000
                         */
+
+                        List<InvVector> vet = Utils.blockLocator(invVectors);
 
                         GetBlocks getHeadersMsg = new GetBlocks(network);
                         // getHeadersMsg.addHash("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
