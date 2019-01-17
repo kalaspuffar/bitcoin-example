@@ -66,6 +66,10 @@ public class BitcoinTest {
         JSONObject jsonDB = (JSONObject)
                 JSONValue.parse(new FileReader(dbFile));
 
+        if(jsonDB == null) {
+            jsonDB = new JSONObject();
+        }
+
         jsonDB.put("addr", new JSONArray());
         JSONArray addressesJson = (JSONArray) jsonDB.get("addr");
         for(NetAddr addr : addresses) {
@@ -173,8 +177,16 @@ public class BitcoinTest {
                         getHeadersMsg.addHash("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
                         out.write(getHeadersMsg.getByteData());
                         out.flush();
-
     */
+
+                        Utils.
+                        invVectors
+
+                        GetBlocks getHeadersMsg = new GetBlocks(network);
+                        // getHeadersMsg.addHash("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+                        out.write(getHeadersMsg.getByteData());
+                        out.flush();
+
                         //                    1 - b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f
                         //                    2 - 39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000
                     }
