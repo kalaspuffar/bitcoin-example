@@ -1,5 +1,6 @@
 package org.ea.main;
 
+import org.ea.messages.data.Header;
 import org.ea.messages.data.InvVector;
 
 import java.nio.ByteBuffer;
@@ -148,12 +149,49 @@ public class Utils {
         return -1;
     }
 
-    public static List<InvVector> blockLocator(Set<InvVector> hashes) {
-        List<InvVector> sortedIndexes = new ArrayList<>();
+    public static void handleHeights(Set<Header> hashes) {
+        if(hashes.size() == 0) return;
+        String nextBlock = "43497FD7F826957108F4A30FD9CEC3AEBA79972084E90EAD01EA330900000000".toLowerCase();
+        long currentHeight = 0;
+
+        List<Header> newHeaders = new ArrayList<>();
+        for(Header header : hashes) {
+            if(header.getHeight() > currentHeight) {
+                nextBlock = header.getId();
+                currentHeight = header.getHeight();
+            }
+            if(header.getHeight() == -1) {
+                newHeaders.add(header);
+            }
+        }
+
+        currentHeight++;
+
+        boolean found = true;
+        String newHeader = "";
+        while(found) {
+            found = false;
+            for (Header header : newHeaders) {
+                if (nextBlock.equalsIgnoreCase(header.getPrevBlock())) {
+                    header.setHeight(currentHeight);
+                    newHeader = header.getId();
+                    found = true;
+                }
+            }
+            nextBlock = newHeader;
+            currentHeight++;
+        }
+        System.out.println("hej");
+    }
+
+
+
+    public static List<Header> blockLocator(Set<Header> hashes) {
+        List<Header> sortedIndexes = new ArrayList<>();
         sortedIndexes.addAll(hashes);
         Collections.sort(sortedIndexes);
 
-        List<InvVector> indexes = new ArrayList<>();
+        List<Header> indexes = new ArrayList<>();
         int step = 1;
 
         // Start at the top of the chain and work backwards.
@@ -166,10 +204,11 @@ public class Utils {
             indexes.add(sortedIndexes.get(index));
         }
 
-        byte[] rev = Utils.reverse(Utils.hex2Byte("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
-        InvVector genesisIV = new InvVector(1, Utils.byte2hex(rev));
+/*
+        byte[] rev = Utils.hex2Byte("43497FD7F826957108F4A30FD9CEC3AEBA79972084E90EAD01EA330900000000");
+        Header genesisIV = new Header(1, Utils.byte2hex(rev));
         indexes.add(genesisIV);
-
+*/
         return indexes;
     }
 }

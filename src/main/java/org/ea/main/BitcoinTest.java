@@ -93,7 +93,10 @@ public class BitcoinTest {
 
         jsonDB.put("headers", new JSONArray());
         JSONArray headersJson = (JSONArray) jsonDB.get("headers");
-        for(Header header : headers) {
+        List<Header> sortedHeaders = new ArrayList<>();
+        sortedHeaders.addAll(headers);
+        Collections.sort(sortedHeaders);
+        for(Header header : sortedHeaders) {
             headersJson.add(header.getJSONObject());
         }
 
@@ -118,6 +121,7 @@ public class BitcoinTest {
             if(!dbFile.exists()) dbFile.createNewFile();
 
             readData(dbFile);
+            Utils.handleHeights(headers);
 
             InetAddress dnsresult[] = InetAddress.getAllByName("seed.tbtc.petertodd.org");
             String ip = null;
@@ -196,10 +200,9 @@ public class BitcoinTest {
                     if(reply instanceof SendHeaders) {
 
                         GetHeaders getHeadersMsg = new GetHeaders(network);
-                        List<InvVector> vet = Utils.blockLocator(invVectors);
-                        for(InvVector iv : vet) {
-                            iv.print();
-                            getHeadersMsg.addHash(iv.getHash());
+                        List<Header> headLocators = Utils.blockLocator(headers);
+                        for(Header head : headLocators) {
+                            getHeadersMsg.addHash(head.getId());
                         }
                         out.write(getHeadersMsg.getByteData());
                         out.flush();
@@ -236,7 +239,7 @@ public class BitcoinTest {
                     if (reply instanceof Inv) {
                         List<InvVector> list = ((Inv)reply).getInvVectors();
                         invVectors.addAll(list);
-
+/*
                         if(list.size() == 500) {
                             GetBlocks getHeadersMsg = new GetBlocks(network);
                             List<InvVector> vet = Utils.blockLocator(invVectors);
@@ -247,24 +250,23 @@ public class BitcoinTest {
                             out.write(getHeadersMsg.getByteData());
                             out.flush();
                         }
+*/
                     }
 
                     if (reply instanceof Headers) {
                         List<Header> list = ((Headers)reply).getHeaders();
                         headers.addAll(list);
+                        Utils.handleHeights(headers);
 
-                        /*
-                        if(list.size() == 500) {
-                            GetBlocks getHeadersMsg = new GetBlocks(network);
-                            List<InvVector> vet = Utils.blockLocator(invVectors);
-                            for (InvVector iv : vet) {
-                                iv.print();
-                                getHeadersMsg.addHash(iv.getHash());
+                        if(list.size() == 2000) {
+                            GetHeaders getHeadersMsg = new GetHeaders(network);
+                            List<Header> headLocators = Utils.blockLocator(headers);
+                            for(Header head : headLocators) {
+                                getHeadersMsg.addHash(head.getId());
                             }
                             out.write(getHeadersMsg.getByteData());
                             out.flush();
                         }
-                        */
                     }
 
                     if (reply instanceof Addr) {

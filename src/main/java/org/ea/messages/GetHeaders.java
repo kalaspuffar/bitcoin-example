@@ -52,7 +52,6 @@ public class GetHeaders extends Reply {
         }
 
         res = Utils.combine(res, hash_stop);
-        Utils.printArray("getHeadersMsg", res);
 
         byte[] header = super.getByteData(res);
 

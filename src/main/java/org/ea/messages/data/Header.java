@@ -9,9 +9,10 @@ import java.util.Arrays;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
-public class Header {
+public class Header implements Comparable<Header> {
 
     private byte[] id;
+    private long height = -1;
     private int version;
     private byte[] prevBlock;
     private byte[] merkleRoot;
@@ -22,6 +23,7 @@ public class Header {
 
     public Header(JSONObject jsonObject) {
         setId((String)jsonObject.get("id"));
+        setHeight(((Long)jsonObject.get("height")).intValue());
         setVersion(((Long)jsonObject.get("version")).intValue());
         setPrevBlock((String)jsonObject.get("prevBlock"));
         setMerkleRoot((String)jsonObject.get("merkleRoot"));
@@ -69,6 +71,14 @@ public class Header {
 
     public void setId(String prevBlock) {
         this.id = Utils.hex2Byte(prevBlock);
+    }
+
+    public long getHeight() {
+        return height;
+    }
+
+    public void setHeight(long height) {
+        this.height = height;
     }
 
     public int getVersion() {
@@ -130,6 +140,7 @@ public class Header {
     public JSONObject getJSONObject() {
         JSONObject obj = new JSONObject();
         obj.put("id", getId());
+        obj.put("height", getHeight());
         obj.put("version", getVersion());
         obj.put("prevBlock", getPrevBlock());
         obj.put("merkleRoot", getMerkleRoot());
@@ -140,4 +151,21 @@ public class Header {
         return obj;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Header invVector = (Header) o;
+        return getId().equalsIgnoreCase(invVector.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
+
+    @Override
+    public int compareTo(Header o) {
+        return Long.compare(this.height, o.height);
+    }
 }
