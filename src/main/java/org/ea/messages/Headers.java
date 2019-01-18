@@ -29,7 +29,11 @@ public class Headers extends Reply {
             currentBlockPlace += 81;
         }
 
-        for(Header h : headers) h.print();
+        //for(Header h : headers) h.print();
+    }
+
+    public List<Header> getHeaders() {
+        return headers;
     }
 }
 

@@ -1,6 +1,7 @@
 package org.ea.main;
 
 import org.ea.messages.*;
+import org.ea.messages.data.Header;
 import org.ea.messages.data.InvVector;
 import org.ea.messages.data.NetAddr;
 import org.json.simple.JSONArray;
@@ -32,6 +33,7 @@ public class BitcoinTest {
     private static int network = 0x0709110B;
     private static Set<NetAddr> addresses = new HashSet<>();
     private static Set<InvVector> invVectors = new HashSet<>();
+    private static Set<Header> headers = new HashSet<>();
 
     public static void readData(File dbFile) throws Exception {
         JSONObject jsonDB = (JSONObject)
@@ -56,8 +58,18 @@ public class BitcoinTest {
             }
         }
 
+        if(jsonDB.containsKey("headers")) {
+            JSONArray headerArr = (JSONArray) jsonDB.get("headers");
+            for (Object header : headerArr) {
+                headers.add(new Header(
+                        (JSONObject) header
+                ));
+            }
+        }
+
         System.out.println("Read " + addresses.size() + " addresses");
         System.out.println("Read " + invVectors.size() + " vectors");
+        System.out.println("Read " + headers.size() + " headers");
     }
 
     private static void writeData(File dbFile) throws Exception {
@@ -79,6 +91,12 @@ public class BitcoinTest {
             invJson.add(iv.getJSONObject());
         }
 
+        jsonDB.put("headers", new JSONArray());
+        JSONArray headersJson = (JSONArray) jsonDB.get("headers");
+        for(Header header : headers) {
+            headersJson.add(header.getJSONObject());
+        }
+
         FileWriter fw = new FileWriter(dbFile);
         if (jsonDB != null) {
             jsonDB.writeJSONString(fw);
@@ -88,6 +106,7 @@ public class BitcoinTest {
 
         System.out.println("Wrote " + addresses.size() + " addresses");
         System.out.println("Wrote " + invVectors.size() + " vectors");
+        System.out.println("Wrote " + headers.size() + " headers");
     }
 
     public static void main(String[] args) {
@@ -100,36 +119,10 @@ public class BitcoinTest {
 
             readData(dbFile);
 
-            if(true) {
-
-//                byte[] one = Utils.hex2Byte("f7b2f9d9a6f44012728b6e09c48750838780f1e1cac9cbaa09e0114200000000");
-//                byte[] two = Utils.hex2Byte("d8f8a6686ecdeac529caa3ab9ecfa84a5fb62b06849ee09b8331d89e00000000");
-                byte[] one = Utils.hex2Byte("b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f");
-                byte[] two = Utils.hex2Byte("39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000");
-                BigInteger oneInt = new BigInteger(1, Utils.reverse(one));
-                BigInteger twoInt = new BigInteger(1, Utils.reverse(two));
-                if(oneInt.compareTo(twoInt) > 0) {
-                    System.out.println(Utils.byte2hex(one) + " > " + Utils.byte2hex(two));
-                } else if(oneInt.compareTo(twoInt) < 0) {
-                    System.out.println(Utils.byte2hex(one) + " < " + Utils.byte2hex(two));
-                } else {
-                    System.out.println(Utils.byte2hex(one) + " == " + Utils.byte2hex(two));
-                }
-                System.exit(0);
-            }
-
-            if(true) {
-                List<InvVector> values = Utils.blockLocator(invVectors);
-                for(InvVector iv : values) {
-                    iv.print();
-                }
-                System.exit(0);
-            }
-
             InetAddress dnsresult[] = InetAddress.getAllByName("seed.tbtc.petertodd.org");
             String ip = null;
             short default_port = 18333;
-            if(addresses.size() == 0) {
+            if(addresses.size() < 20) {
                 for (int i = 0; i < dnsresult.length; i++) {
                     if (dnsresult[i].getHostAddress().startsWith("1")) {
                         ip = dnsresult[i].getHostAddress();
@@ -201,24 +194,30 @@ public class BitcoinTest {
                     }
 
                     if(reply instanceof SendHeaders) {
-                        /*
+
                         GetHeaders getHeadersMsg = new GetHeaders(network);
-                        getHeadersMsg.addHash("dde7f4b78f3b38d6262e16ad6c9ae0c567c23c6735563abba5a5bec1f103506b");
+                        List<InvVector> vet = Utils.blockLocator(invVectors);
+                        for(InvVector iv : vet) {
+                            iv.print();
+                            getHeadersMsg.addHash(iv.getHash());
+                        }
                         out.write(getHeadersMsg.getByteData());
                         out.flush();
 
 
                         //                    1 - b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f
                         //                    2 - 39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000
-                        */
-
+/*
+                        GetBlocks getBlocksMsg = new GetBlocks(network);
                         List<InvVector> vet = Utils.blockLocator(invVectors);
-
-                        GetBlocks getHeadersMsg = new GetBlocks(network);
-                        // getHeadersMsg.addHash("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
-                        out.write(getHeadersMsg.getByteData());
+                        System.out.println("Number of vectors: " + vet.size());
+                        for(InvVector iv : vet) {
+                            iv.print();
+                            getBlocksMsg.addHash(iv.getHash());
+                        }
+                        out.write(getBlocksMsg.getByteData());
                         out.flush();
-
+*/
 /*
                         GetData getData = new GetData(network);
                         for (InvVector iv : invVectors) {
@@ -226,8 +225,8 @@ public class BitcoinTest {
                         }
                         out.write(getData.getByteData());
                         out.flush();
-                        */
-                   }
+*/
+                    }
 
                     if (reply instanceof Ping) {
                         out.write(((Ping) reply).getPongData());
@@ -235,23 +234,37 @@ public class BitcoinTest {
                     }
 
                     if (reply instanceof Inv) {
-                        invVectors.addAll(((Inv)reply).getInvVectors());
-/*
-                        GetHeaders getHeadersMsg = new GetHeaders(network);
-                        for (InvVector iv : ((Inv) reply).getInvVectors()) {
-                            getHeadersMsg.addHash(iv.getHash());
+                        List<InvVector> list = ((Inv)reply).getInvVectors();
+                        invVectors.addAll(list);
+
+                        if(list.size() == 500) {
+                            GetBlocks getHeadersMsg = new GetBlocks(network);
+                            List<InvVector> vet = Utils.blockLocator(invVectors);
+                            for (InvVector iv : vet) {
+                                iv.print();
+                                getHeadersMsg.addHash(iv.getHash());
+                            }
+                            out.write(getHeadersMsg.getByteData());
+                            out.flush();
                         }
-                        out.write(getHeadersMsg.getByteData());
-                        out.flush();
-*/
-/*
-                        GetData getData = new GetData(network);
-                        for (InvVector iv : ((Inv) reply).getInvVectors()) {
-                            getData.addVector(iv);
+                    }
+
+                    if (reply instanceof Headers) {
+                        List<Header> list = ((Headers)reply).getHeaders();
+                        headers.addAll(list);
+
+                        /*
+                        if(list.size() == 500) {
+                            GetBlocks getHeadersMsg = new GetBlocks(network);
+                            List<InvVector> vet = Utils.blockLocator(invVectors);
+                            for (InvVector iv : vet) {
+                                iv.print();
+                                getHeadersMsg.addHash(iv.getHash());
+                            }
+                            out.write(getHeadersMsg.getByteData());
+                            out.flush();
                         }
-                        out.write(getData.getByteData());
-                        out.flush();
-*/
+                        */
                     }
 
                     if (reply instanceof Addr) {

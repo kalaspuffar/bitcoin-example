@@ -8,6 +8,11 @@ public class VarInt {
     private long value;
     private int numBytes;
 
+    public VarInt(long data) {
+        numBytes = 1;
+        value = data;
+    }
+
     public VarInt(byte[] data) {
         if((data[0] & 0xFF) == 0xFF) {
             numBytes = 9;

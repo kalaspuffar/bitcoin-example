@@ -56,7 +56,7 @@ public class GetBlocks extends Reply {
         }
 
         res = Utils.combine(res, hash_stop);
-        Utils.printArray("getBlocksMsg", res);
+        //Utils.printArray("getBlocksMsg", res);
 
         byte[] header = super.getByteData(res);
 

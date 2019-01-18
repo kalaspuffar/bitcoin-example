@@ -19,6 +19,7 @@ public class InvVector implements Comparable<InvVector> {
 
     private int id;
     private byte[] hash;
+    private byte[] revHash;
 
     public InvVector(JSONObject jsonObject) {
         setId(((Long)jsonObject.get("id")).intValue());
@@ -26,10 +27,11 @@ public class InvVector implements Comparable<InvVector> {
     }
 
     public InvVector(byte[] data) {
-        id = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4))
+        this.id = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4))
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .getInt();
-        hash = Arrays.copyOfRange(data, 4, 36);
+        this.hash = Arrays.copyOfRange(data, 4, 36);
+        this.revHash = Utils.reverse(this.hash);
     }
 
     public InvVector(int i, String s) {
@@ -43,10 +45,11 @@ public class InvVector implements Comparable<InvVector> {
 
     public void setHash(String hash) {
         this.hash = Utils.hex2Byte(hash);
+        this.revHash = Utils.reverse(this.hash);
     }
 
     public void print() {
-        System.out.println(id + " - " + Utils.byte2hex(hash));
+        System.out.println(id + " - " + Utils.byte2hex(revHash));
     }
 
     public byte[] getByteData() {
@@ -89,14 +92,15 @@ public class InvVector implements Comparable<InvVector> {
 
     @Override
     public int compareTo(InvVector o) {
-
-        if(getId() > o.getId()) {
-            return 1;
+        for(int i = 0; i < 32; i++) {
+            if((this.revHash[i] & 0xFF) > (o.revHash[i] & 0xFF)) {
+                return 1;
+            } else if((this.revHash[i] & 0xFF) < (o.revHash[i] & 0xFF)) {
+                return -1;
+            }
         }
-        if(getId() < o.getId()) {
-            return -1;
-        }
-
+        return 0;
+/*
         System.out.println(Utils.byte2hex(o.hash));
 
         BigInteger other = new BigInteger(1,
@@ -115,5 +119,6 @@ public class InvVector implements Comparable<InvVector> {
         }
 
         return curr.compareTo(other);
+*/
     }
 }

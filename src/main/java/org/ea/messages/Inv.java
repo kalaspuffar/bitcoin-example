@@ -28,10 +28,11 @@ public class Inv extends Reply {
             ));
             currentIndex += 36;
         }
-
+/*
         for(InvVector iv : inventoryVectors) {
             iv.print();
         }
+*/
     }
 
     public List<InvVector> getInvVectors() {

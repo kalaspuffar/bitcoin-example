@@ -60,12 +60,12 @@ public class Utils {
     }
 
     public static byte[] reverse(byte[] data) {
+        byte[] newData = new byte[data.length];
         for(int i = 0; i < data.length / 2; i++) {
-            byte temp = data[i];
-            data[i] = data[data.length - i - 1];
-            data[data.length - i - 1] = temp;
+            newData[i] = data[data.length - i - 1];
+            newData[data.length - i - 1] = data[i];
         }
-        return data;
+        return newData;
     }
 
     public static byte[] getShortToBytes(short input) {
@@ -152,6 +152,7 @@ public class Utils {
         List<InvVector> sortedIndexes = new ArrayList<>();
         sortedIndexes.addAll(hashes);
         Collections.sort(sortedIndexes);
+
         List<InvVector> indexes = new ArrayList<>();
         int step = 1;
 
@@ -164,6 +165,11 @@ public class Utils {
 
             indexes.add(sortedIndexes.get(index));
         }
+
+        byte[] rev = Utils.reverse(Utils.hex2Byte("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
+        InvVector genesisIV = new InvVector(1, Utils.byte2hex(rev));
+        indexes.add(genesisIV);
+
         return indexes;
     }
 }
