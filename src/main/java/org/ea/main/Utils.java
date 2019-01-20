@@ -3,6 +3,7 @@ package org.ea.main;
 import org.ea.messages.data.Header;
 import org.ea.messages.data.InvVector;
 
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
@@ -149,66 +150,75 @@ public class Utils {
         return -1;
     }
 
-    public static void handleHeights(Set<Header> hashes) {
-        if(hashes.size() == 0) return;
+    public static void handleHeights(File headersFile, List<Header> list) throws Exception {
+        if(list.size() == 0) return;
         String nextBlock = "43497FD7F826957108F4A30FD9CEC3AEBA79972084E90EAD01EA330900000000".toLowerCase();
         long currentHeight = 0;
 
-        List<Header> newHeaders = new ArrayList<>();
-        for(Header header : hashes) {
-            if(header.getHeight() > currentHeight) {
-                nextBlock = header.getId();
-                currentHeight = header.getHeight();
+        if(headersFile.exists()) {
+            RandomAccessFile raf = new RandomAccessFile(headersFile, "r");
+
+            if (headersFile != null && headersFile.length() > 0) {
+                byte[] headerBytes = new byte[80];
+                currentHeight = headersFile.length() / 80;
+                raf.seek((currentHeight - 1) * 80);
+                raf.read(headerBytes);
+                Header startHeader = new Header(headerBytes);
+                nextBlock = startHeader.getId();
             }
-            if(header.getHeight() == -1) {
+        }
+
+        List<Header> newHeaders = new ArrayList<>();
+        for (Header header : list) {
+            if (nextBlock.equalsIgnoreCase(header.getPrevBlock())) {
+                nextBlock = header.getId();
                 newHeaders.add(header);
             }
         }
 
-        currentHeight++;
-
-        boolean found = true;
-        String newHeader = "";
-        while(found) {
-            found = false;
-            for (Header header : newHeaders) {
-                if (nextBlock.equalsIgnoreCase(header.getPrevBlock())) {
-                    header.setHeight(currentHeight);
-                    newHeader = header.getId();
-                    found = true;
-                }
-            }
-            nextBlock = newHeader;
-            currentHeight++;
+        FileOutputStream fos = new FileOutputStream(headersFile, true);
+        for(Header header : newHeaders) {
+            fos.write(header.getHeaderData());
         }
-        System.out.println("hej");
+        fos.flush();
+        fos.close();
+
+        System.out.println("Have " + (headersFile.length() / 80) + " headers");
     }
 
 
 
-    public static List<Header> blockLocator(Set<Header> hashes) {
-        List<Header> sortedIndexes = new ArrayList<>();
-        sortedIndexes.addAll(hashes);
-        Collections.sort(sortedIndexes);
-
+    public static List<Header> blockLocator(File headersFile) throws Exception {
+        if(!headersFile.exists()) {
+            List<Header> justOne = new ArrayList<>();
+            byte[] rev = Utils.hex2Byte("43497FD7F826957108F4A30FD9CEC3AEBA79972084E90EAD01EA330900000000");
+            Header genesisIV = new Header(1, rev);
+            justOne.add(genesisIV);
+            return justOne;
+        }
+        RandomAccessFile raf = new RandomAccessFile(headersFile, "r");
         List<Header> indexes = new ArrayList<>();
         int step = 1;
 
+        long topHeight = headersFile.length() / 80;
+
+        byte[] header = new byte[80];
+
         // Start at the top of the chain and work backwards.
-        for (int index = sortedIndexes.size() - 1; index > 0; index -= step)
-        {
+        for (long index = topHeight - 1; index > 0; index -= step) {
             // Push top 10 indexes first, then back off exponentially.
             if (indexes.size() >= 10)
                 step *= 2;
 
-            indexes.add(sortedIndexes.get(index));
+            raf.seek(index * 80);
+            raf.read(header);
+            indexes.add(new Header(header));
         }
 
-/*
         byte[] rev = Utils.hex2Byte("43497FD7F826957108F4A30FD9CEC3AEBA79972084E90EAD01EA330900000000");
-        Header genesisIV = new Header(1, Utils.byte2hex(rev));
+        Header genesisIV = new Header(1, rev);
         indexes.add(genesisIV);
-*/
+
         return indexes;
     }
 }

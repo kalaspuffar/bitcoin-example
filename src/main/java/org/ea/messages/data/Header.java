@@ -21,6 +21,11 @@ public class Header implements Comparable<Header> {
     private int nonce;
     private VarInt txnCount;
 
+    public Header(int version, byte[] id) {
+        this.version = version;
+        this.id = id;
+    }
+
     public Header(JSONObject jsonObject) {
         setId((String)jsonObject.get("id"));
         setHeight(((Long)jsonObject.get("height")).intValue());
@@ -44,7 +49,10 @@ public class Header implements Comparable<Header> {
                 .order(LITTLE_ENDIAN).getInt();
         this.nonce = ByteBuffer.wrap(Arrays.copyOfRange(data, 76, 80))
                 .order(LITTLE_ENDIAN).getInt();
-        this.txnCount = new VarInt(Arrays.copyOfRange(data, 80, data.length));
+
+        if(data.length > 80) {
+            this.txnCount = new VarInt(Arrays.copyOfRange(data, 80, data.length));
+        }
 
         byte[] hashData = new byte[0];
         hashData = Utils.combine(hashData, Utils.getIntToBytes(this.version));
@@ -157,6 +165,16 @@ public class Header implements Comparable<Header> {
         if (o == null || getClass() != o.getClass()) return false;
         Header invVector = (Header) o;
         return getId().equalsIgnoreCase(invVector.getId());
+    }
+
+    public byte[] getHeaderData() {
+        byte[] hashData = new byte[0];
+        hashData = Utils.combine(hashData, Utils.getIntToBytes(this.version));
+        hashData = Utils.combine(hashData, this.prevBlock);
+        hashData = Utils.combine(hashData, this.merkleRoot);
+        hashData = Utils.combine(hashData, Utils.getIntToBytes(this.timestamp));
+        hashData = Utils.combine(hashData, Utils.getIntToBytes(this.bits));
+        return Utils.combine(hashData, Utils.getIntToBytes(this.nonce));
     }
 
     @Override
