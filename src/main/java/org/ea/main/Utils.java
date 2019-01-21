@@ -221,4 +221,21 @@ public class Utils {
 
         return indexes;
     }
+
+    public static File getDataPath() {
+        return new File("data");
+    }
+
+    public static boolean findFileName(String id) {
+        File dir = new File(getDataPath(), id.substring(0, 16));
+        if(!dir.exists()) return false;
+
+        File file = new File(dir, id);
+        return file.exists();
+    }
+
+    public static String getId(byte[] bytes) throws Exception {
+        if(bytes.length != 80) return null;
+        return byte2hex(dhash(bytes));
+    }
 }
