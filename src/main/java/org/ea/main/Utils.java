@@ -181,7 +181,6 @@ public class Utils {
             FileInputStream fis = new FileInputStream(headersFile);
             byte[] buffer = new byte[8000];
 
-
             FileOutputStream fos = new FileOutputStream(newHeaderFile);
 
             int numRead;
