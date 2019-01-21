@@ -159,9 +159,9 @@ public class Utils {
             RandomAccessFile raf = new RandomAccessFile(headersFile, "r");
 
             if (headersFile != null && headersFile.length() > 0) {
-                byte[] headerBytes = new byte[80];
                 currentHeight = headersFile.length() / 80;
                 raf.seek((currentHeight - 1) * 80);
+                byte[] headerBytes = new byte[80];
                 raf.read(headerBytes);
                 Header startHeader = new Header(headerBytes);
                 nextBlock = startHeader.getId();
@@ -176,12 +176,52 @@ public class Utils {
             }
         }
 
-        FileOutputStream fos = new FileOutputStream(headersFile, true);
-        for(Header header : newHeaders) {
-            fos.write(header.getHeaderData());
+        if(newHeaders.size() == 0 && list.size() > 0) {
+            File newHeaderFile = new File(headersFile.getParentFile(), "header.new");
+            FileInputStream fis = new FileInputStream(headersFile);
+            byte[] buffer = new byte[8000];
+
+
+            FileOutputStream fos = new FileOutputStream(newHeaderFile);
+
+            int numRead;
+            int foundValues = 0;
+            reading:
+            while((numRead = fis.read(buffer)) != -1) {
+                for(int i = 0; i < numRead / 80; i++) {
+                    byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i+1) * 80);
+                    Header startHeader = new Header(headerBytes);
+                    if(list.get(0).getPrevBlock().equals(startHeader.getId())) {
+                        foundValues = i;
+                        break reading;
+                    }
+                }
+                fos.write(buffer);
+            }
+
+            for(int i = 0; i < foundValues / 80; i++) {
+                byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i+1) * 80);
+                fos.write(headerBytes);
+            }
+
+            for (Header header : list) {
+                if (nextBlock.equalsIgnoreCase(header.getPrevBlock())) {
+                    fos.write(header.getHeaderData());
+                    nextBlock = header.getId();
+                }
+            }
+
+            fos.flush();
+            fos.close();
+
+        } else {
+            FileOutputStream fos = new FileOutputStream(headersFile, true);
+            for (Header header : newHeaders) {
+                fos.write(header.getHeaderData());
+            }
+            fos.flush();
+            fos.close();
         }
-        fos.flush();
-        fos.close();
 
         System.out.println("Have " + (headersFile.length() / 80) + " headers");
     }
