@@ -9,12 +9,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.*;
 
@@ -60,6 +58,14 @@ public class BitcoinTest {
 
         System.out.println("Read " + addresses.size() + " addresses");
         System.out.println("Read " + invVectors.size() + " vectors");
+
+        long numBlocks = 0;
+        for(File f : Utils.getDataPath().listFiles()) {
+            if(f.isDirectory()) {
+                numBlocks += f.listFiles().length;
+            }
+        }
+        System.out.println("Blocks downloaded " + numBlocks);
     }
 
     private static void writeData(File dbFile) throws Exception {
@@ -90,12 +96,44 @@ public class BitcoinTest {
 
         System.out.println("Wrote " + addresses.size() + " addresses");
         System.out.println("Wrote " + invVectors.size() + " vectors");
+
+        long numBlocks = 0;
+        for(File f : Utils.getDataPath().listFiles()) {
+            if(f.isDirectory()) {
+                numBlocks += f.listFiles().length;
+            }
+        }
+        System.out.println("Blocks downloaded " + numBlocks);
     }
 
     public static void main(String[] args) {
-        File dataDir = new File("data");
+        File dataDir = Utils.getDataPath();
         File dbFile = new File(dataDir, "db.json");
         File headersFile = new File(dataDir, "header.data");
+
+        List<String> blocksToDownload = new ArrayList<>();
+
+        try {
+            FileInputStream fis = new FileInputStream(headersFile);
+            byte[] buffer = new byte[800000];
+
+            int numRead;
+            int count = 0;
+            while((numRead = fis.read(buffer)) != -1) {
+                for(int i = 0; i < numRead / 80; i++) {
+                    byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i+1) * 80);
+                    String id = Utils.getId(headerBytes);
+                    if (!Utils.findFileName(id)) {
+                        blocksToDownload.add(id);
+                    }
+                }
+                System.out.print(".");
+                count++;
+                if(count % 100 == 0) System.out.println();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         long lastBlock = (headersFile.length() / 80);
         System.out.println("Have " + lastBlock + " headers");
@@ -183,35 +221,18 @@ public class BitcoinTest {
 
                         if (reply instanceof SendHeaders) {
 
-                            GetHeaders getHeadersMsg = new GetHeaders(network);
-                            List<Header> headLocators = Utils.blockLocator(headersFile);
-                            for (Header head : headLocators) {
-                                getHeadersMsg.addHash(head.getId());
-                            }
-                            out.write(getHeadersMsg.getByteData());
-                            out.flush();
-
-                            //                    1 - b849fd2fc65ef709bb3cbe7e959bcb7549c56e8d54a35ae63fd4f85f
-                            //                    2 - 39adc6a805954c9fc038dbfab6d6ae2a0e16f02f3f0cacbf5c000000
-    /*
-                            GetBlocks getBlocksMsg = new GetBlocks(network);
-                            List<InvVector> vet = Utils.blockLocator(invVectors);
-                            System.out.println("Number of vectors: " + vet.size());
-                            for(InvVector iv : vet) {
-                                iv.print();
-                                getBlocksMsg.addHash(iv.getHash());
-                            }
-                            out.write(getBlocksMsg.getByteData());
-                            out.flush();
-    */
-    /*
                             GetData getData = new GetData(network);
-                            for (InvVector iv : invVectors) {
-                                getData.addVector(iv);
+                            int count = 0;
+                            Iterator<String> it = blocksToDownload.iterator();
+                            while(it.hasNext()) {
+                                String id = it.next();
+                                it.remove();
+                                if(count > 1000) break;
+                                getData.addVector(new InvVector(2, id));
+                                count++;
                             }
                             out.write(getData.getByteData());
                             out.flush();
-    */
                         }
 
                         if (reply instanceof Ping) {
@@ -223,6 +244,19 @@ public class BitcoinTest {
                             List<InvVector> list = ((Inv) reply).getInvVectors();
                             invVectors.addAll(list);
                             writeData(dbFile);
+
+                            GetData getData = new GetData(network);
+                            int count = 0;
+                            Iterator<String> it = blocksToDownload.iterator();
+                            while(it.hasNext()) {
+                                String id = it.next();
+                                it.remove();
+                                if(count > 1000) break;
+                                getData.addVector(new InvVector(2, id));
+                                count++;
+                            }
+                            out.write(getData.getByteData());
+                            out.flush();
                         }
 
                         if (reply instanceof Headers) {
