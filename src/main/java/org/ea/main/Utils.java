@@ -214,6 +214,8 @@ public class Utils {
             fos.flush();
             fos.close();
 
+            newHeaderFile.renameTo(headersFile);
+
         } else {
             FileOutputStream fos = new FileOutputStream(headersFile, true);
             for (Header header : newHeaders) {
