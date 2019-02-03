@@ -136,7 +136,7 @@ public class BitcoinTest {
         }
 
         long lastBlock = (headersFile.length() / 80);
-        System.out.println("Have " + lastBlock + " headers");
+        System.out.println("\nHave " + lastBlock + " headers");
 
         while(true) {
             try {
@@ -233,6 +233,8 @@ public class BitcoinTest {
                             }
                             out.write(getData.getByteData());
                             out.flush();
+
+                            System.out.println("Blocks left in queue " + blocksToDownload.size());
                         }
 
                         if (reply instanceof Ping) {
@@ -257,6 +259,8 @@ public class BitcoinTest {
                             }
                             out.write(getData.getByteData());
                             out.flush();
+
+                            System.out.println("Blocks left in queue " + blocksToDownload.size());
                         }
 
                         if (reply instanceof Headers) {

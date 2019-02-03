@@ -1,22 +1,26 @@
 package org.ea.messages;
 
 import org.ea.main.Utils;
+import org.ea.messages.data.Header;
+import org.ea.messages.data.Transaction;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Block extends Reply {
+    private Header blockHeader;
+    private List<Transaction> transactionList = new ArrayList<>();
+
+    public Block() {}
+
     protected Block(byte[] msg) throws Exception{
         super(msg);
-
-        int version = ByteBuffer.wrap(
-                Arrays.copyOfRange(data, 0, 4)
-        ).order(ByteOrder.LITTLE_ENDIAN).getInt();
-
-        System.out.println("BLOCK " + version);
+        blockHeader = new Header(data);
 
         try {
             byte[] idHash = Utils.dhash(Arrays.copyOfRange(data, 0, 80));
@@ -32,5 +36,21 @@ public class Block extends Reply {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void setData(byte[] data) {
+        blockHeader = new Header(data);
+        int len = blockHeader.getHeaderLen();
+
+        long numTrans = blockHeader.getTxnCount();
+
+        byte[] transData = Arrays.copyOfRange(data, len + blockHeader.getTxnBytes(), data.length);
+
+        for(int i=0; i<numTrans; i++) {
+            Transaction trans = new Transaction();
+            transData = trans.setData(transData);
+            transactionList.add(trans);
+        }
+        System.out.println(transData.length);
     }
 }

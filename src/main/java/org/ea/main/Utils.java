@@ -70,6 +70,10 @@ public class Utils {
         return newData;
     }
 
+    public static String reverse(String data) {
+        return Utils.byte2hex(Utils.reverse(Utils.hex2Byte(data)));
+    }
+
     public static byte[] getShortToBytes(short input) {
         return ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(input).array();
     }
