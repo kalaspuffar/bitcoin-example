@@ -28,9 +28,7 @@ public class ReadTrans {
                 System.out.println(Utils.reverse(id));
                 System.out.println(id);
 
-                File dir = new File(Utils.getDataPath(), id.substring(0, 16));
-                dir.mkdirs();
-                File file = new File(dir, id);
+                File file = Utils.findFile(id);
 
                 FileInputStream fis = new FileInputStream(file);
                 final int BUFFER_SIZE = 1024 * 1024;

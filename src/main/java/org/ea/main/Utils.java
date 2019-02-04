@@ -281,6 +281,15 @@ public class Utils {
         return file.exists();
     }
 
+    public static File findFile(String id) {
+        File blockDir = new File(getDataPath(), "blocks");
+        if(!blockDir.exists()) return null;
+        File dir = new File(blockDir, id.substring(0, 4));
+        if(!dir.exists()) return null;
+
+        return new File(dir, id);
+    }
+
     public static String getId(byte[] bytes) throws Exception {
         if(bytes.length != 80) return null;
         return byte2hex(dhash(bytes));
