@@ -7,7 +7,7 @@ public class InputScript {
     private byte[] previousOutput;
     private int previousIndex;
     private VarInt script_len;
-    private byte[] script;
+    private Script script;
     private int sequence;
 
     public byte[] setData(byte[] data) {
@@ -18,7 +18,7 @@ public class InputScript {
         int scriptOffset = 36 + script_len.getNumBytes();
         int scriptEnd = (int)(scriptOffset + script_len.getValue());
 
-        script = Arrays.copyOfRange(data, scriptOffset, scriptEnd);
+        script = new Script(Arrays.copyOfRange(data, scriptOffset, scriptEnd));
         sequence = ByteBuffer.wrap(Arrays.copyOfRange(data, scriptEnd, scriptEnd+4)).getInt();
 
         return Arrays.copyOfRange(data, scriptEnd+4, data.length);

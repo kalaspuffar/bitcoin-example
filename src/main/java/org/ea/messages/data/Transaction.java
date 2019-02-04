@@ -44,6 +44,8 @@ public class Transaction {
             System.out.println("DARN!");
         }
 
+        System.out.println("In: "+ inScript.size() + " Out: " + outScript.size());
+
         lockTime = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4)).getInt();
 
         return Arrays.copyOfRange(data, 4, data.length);
