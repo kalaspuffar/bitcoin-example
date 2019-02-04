@@ -212,14 +212,19 @@ public class BitcoinTest {
                             Verack verackMsg = new Verack(network);
                             out.write(verackMsg.getByteData());
                             out.flush();
-                        }
-                        if (reply instanceof Verack) {
+                        } else if (reply instanceof Verack) {
                             SendHeaders sendHeaders = new SendHeaders(network);
                             out.write(sendHeaders.getByteData());
                             out.flush();
-                        }
+                        } else if (reply instanceof SendHeaders) {
 
-                        if (reply instanceof SendHeaders) {
+                            GetHeaders getHeadersMsg = new GetHeaders(network);
+                            List<Header> headLocators = Utils.blockLocator(headersFile);
+                            for (Header head : headLocators) {
+                                getHeadersMsg.addHash(head.getId());
+                            }
+                            out.write(getHeadersMsg.getByteData());
+                            out.flush();
 
                             GetData getData = new GetData(network);
                             int count = 0;
@@ -233,14 +238,10 @@ public class BitcoinTest {
                             }
                             out.write(getData.getByteData());
                             out.flush();
-                        }
-
-                        if (reply instanceof Ping) {
+                        } else if (reply instanceof Ping) {
                             out.write(((Ping) reply).getPongData());
                             out.flush();
-                        }
-
-                        if (reply instanceof Inv) {
+                        } else if (reply instanceof Inv) {
                             List<InvVector> list = ((Inv) reply).getInvVectors();
                             invVectors.addAll(list);
                             writeData(dbFile);
@@ -257,9 +258,7 @@ public class BitcoinTest {
                             }
                             out.write(getData.getByteData());
                             out.flush();
-                        }
-
-                        if (reply instanceof Headers) {
+                        } else if (reply instanceof Headers) {
                             List<Header> list = ((Headers) reply).getHeaders();
                             Utils.handleHeights(headersFile, list);
 
@@ -272,14 +271,10 @@ public class BitcoinTest {
                                 out.write(getHeadersMsg.getByteData());
                                 out.flush();
                             }
-                        }
-
-                        if (reply instanceof Addr) {
+                        } else if (reply instanceof Addr) {
                             addresses.addAll(((Addr) reply).getAddresses());
                             writeData(dbFile);
-                        }
-
-                        if (reply instanceof Reject) {
+                        } else if (reply instanceof Reject) {
                             System.out.println(reply);
                         }
                     }
