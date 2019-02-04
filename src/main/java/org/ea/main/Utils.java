@@ -268,7 +268,9 @@ public class Utils {
     }
 
     public static boolean findFileName(String id) {
-        File dir = new File(getDataPath(), id.substring(0, 16));
+        File blockDir = new File(getDataPath(), "blocks");
+        if(!blockDir.exists()) return false;
+        File dir = new File(blockDir, id.substring(0, 4));
         if(!dir.exists()) return false;
 
         File file = new File(dir, id);
