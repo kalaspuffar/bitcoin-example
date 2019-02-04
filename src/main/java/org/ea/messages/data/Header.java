@@ -141,6 +141,10 @@ public class Header implements Comparable<Header> {
         return txnCount.getValue();
     }
 
+    public int getTxnBytes() {
+        return txnCount.getNumBytes();
+    }
+
     public void setTxnCount(long count) {
         this.txnCount = new VarInt(count);
     }
@@ -175,6 +179,10 @@ public class Header implements Comparable<Header> {
         hashData = Utils.combine(hashData, Utils.getIntToBytes(this.timestamp));
         hashData = Utils.combine(hashData, Utils.getIntToBytes(this.bits));
         return Utils.combine(hashData, Utils.getIntToBytes(this.nonce));
+    }
+
+    public int getHeaderLen() {
+        return getHeaderData().length;
     }
 
     @Override
