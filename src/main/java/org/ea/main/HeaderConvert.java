@@ -8,10 +8,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class HeaderConvert {
 
@@ -36,22 +33,35 @@ public class HeaderConvert {
 
     public static void main(String[] args) {
         File dataDir = new File("data");
-        File headersFile = new File(dataDir, "header.old");
-        File newHeadersFile = new File(dataDir, "header.data");
+        File headersFile = new File(dataDir, "header.data");
+        File newHeadersFile = new File(dataDir, "header.new");
 
-        List<String> ids = new ArrayList<String>();
         try {
             newHeadersFile.createNewFile();
 
             FileInputStream fis = new FileInputStream(headersFile);
             FileOutputStream fos = new FileOutputStream(newHeadersFile);
-            byte[] headerBytes = new byte[80];
-            while(fis.read(headerBytes) == 80) {
-                String id = new Header(headerBytes).getId();
-                if(!ids.contains(id)) {
-                    fos.write(headerBytes);
-                    ids.add(id);
+            byte[] buffer = new byte[800000];
+
+            int numRead;
+            int count = 0;
+            String previousId = null;
+
+            readloop:
+            while((numRead = fis.read(buffer)) != -1) {
+                for(int i = 0; i < numRead / 80; i++) {
+                    byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i+1) * 80);
+                    Header header = new Header(headerBytes);
+                    if(previousId == null || previousId.equals(header.getPrevBlock())) {
+                        previousId = header.getId();
+                        fos.write(headerBytes);
+                    } else {
+                        break readloop;
+                    }
                 }
+                System.out.print(".");
+                count++;
+                if(count % 100 == 0) System.out.println();
             }
             fos.flush();
             fos.close();
@@ -59,9 +69,9 @@ public class HeaderConvert {
             e.printStackTrace();
         }
 
-
-
         System.out.println(newHeadersFile.length() / 80);
+
+
         /*
         File dbFile = new File(dataDir, "db.json");
         try {

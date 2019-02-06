@@ -1,7 +1,6 @@
 package org.ea.main;
 
 import org.ea.messages.data.Header;
-import org.ea.messages.data.InvVector;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -79,7 +78,15 @@ public class Utils {
     }
 
     public static byte[] getIntToBytes(int input) {
-        return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(input).array();
+        return getIntToBytes(input, false);
+    }
+
+    public static byte[] getIntToBytes(int input, boolean bigEndian) {
+        if(bigEndian) {
+            return ByteBuffer.allocate(4).putInt(input).array();
+        } else {
+            return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(input).array();
+        }
     }
 
     public static byte[] getLongToBytes(long input) {

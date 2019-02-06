@@ -39,6 +39,10 @@ public class Block extends Reply {
         }
     }
 
+    public String getId() {
+        return blockHeader.getId();
+    }
+
     public void setData(byte[] data) {
         blockHeader = new Header(data);
         int len = blockHeader.getHeaderLen();
@@ -53,5 +57,48 @@ public class Block extends Reply {
             transactionList.add(trans);
         }
         System.out.println(transData.length);
+    }
+
+    private byte[] combineMerkle(List<Transaction> a) throws Exception {
+        if(a.size() > 2) {
+            int size = a.size();
+            if(a.size() % 2 == 1) {
+                 size++;
+            }
+            byte[] merkle1 = combineMerkle(a.subList(0, size / 2));
+            byte[] merkle2 = combineMerkle(a.subList(size / 2, size));
+            return Utils.dhash(Utils.combine(merkle1, merkle2));
+        } else if(a.size() == 2) {
+            Transaction t1 = a.get(0);
+            Transaction t2 = a.get(1);
+            byte[] hash1 = Utils.dhash(t1.getData());
+            byte[] hash2 = Utils.dhash(t2.getData());
+            return Utils.dhash(Utils.combine(hash1, hash2));
+        } else {
+            Transaction t = a.get(0);
+            byte[] hash1 = Utils.dhash(t.getData());
+            byte[] hash2 = Utils.dhash(t.getData());
+            return Utils.dhash(Utils.combine(hash1, hash2));
+        }
+    }
+
+    public boolean verifyMerkleRoot() {
+
+        try {
+            byte[] merkleToVerify = Utils.dhash(transactionList.get(0).getData());
+            return Arrays.compare(merkleToVerify, blockHeader.getMerkleRootBytes()) == 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /*
+        try {
+            byte[] merkleToVerify = combineMerkle(transactionList);
+            System.out.println(Utils.byte2hex(merkleToVerify));
+            System.out.println(blockHeader.getMerkleRoot());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        */
+        return false;
     }
 }

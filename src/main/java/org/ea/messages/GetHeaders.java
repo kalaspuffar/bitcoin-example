@@ -35,8 +35,6 @@ public class GetHeaders extends Reply {
             currentBlockPlace += 32;
         }
 
-        System.out.println(hashes.get(0));
-
         System.out.println("Got a request for " + hashes.size() + " num of hashes");
     }
 

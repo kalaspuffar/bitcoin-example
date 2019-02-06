@@ -111,7 +111,7 @@ public class BitcoinTest {
         File dbFile = new File(dataDir, "db.json");
         File headersFile = new File(dataDir, "header.data");
 
-        List<String> blocksToDownload = new ArrayList<>();
+        Set<String> blocksToDownload = new HashSet<>();
 
         try {
             FileInputStream fis = new FileInputStream(headersFile);
@@ -231,7 +231,6 @@ public class BitcoinTest {
                             Iterator<String> it = blocksToDownload.iterator();
                             while(it.hasNext()) {
                                 String id = it.next();
-                                it.remove();
                                 if(count > 1000) break;
                                 getData.addVector(new InvVector(2, id));
                                 count++;
@@ -252,7 +251,6 @@ public class BitcoinTest {
                             Iterator<String> it = blocksToDownload.iterator();
                             while(it.hasNext()) {
                                 String id = it.next();
-                                it.remove();
                                 if(count > 1000) break;
                                 getData.addVector(new InvVector(2, id));
                                 count++;
@@ -273,6 +271,25 @@ public class BitcoinTest {
                                 out.write(getHeadersMsg.getByteData());
                                 out.flush();
                             }
+                        } else if (reply instanceof Block) {
+                            String id = ((Block) reply).getId();
+                            if(Utils.findFileName(id)) {
+                                blocksToDownload.remove(id);
+                            }
+                            System.out.println("Blocks left in queue " + blocksToDownload.size());
+
+                            Iterator<String> it = blocksToDownload.iterator();
+                            Random rn = new Random();
+                            int randomInt = rn.nextInt(blocksToDownload.size() + 1);
+                            for(int i=0; i<randomInt; i++) {
+                                id = it.next();
+                            }
+
+                            GetData getData = new GetData(network);
+                            getData.addVector(new InvVector(2, id));
+                            out.write(getData.getByteData());
+                            out.flush();
+
                         } else if (reply instanceof Addr) {
                             addresses.addAll(((Addr) reply).getAddresses());
                             writeData(dbFile);

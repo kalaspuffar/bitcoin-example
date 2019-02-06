@@ -1,5 +1,8 @@
 package org.ea.messages.data;
 
+import jdk.jshell.execution.Util;
+import org.ea.main.Utils;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,5 +52,28 @@ public class Transaction {
         lockTime = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4)).getInt();
 
         return Arrays.copyOfRange(data, 4, data.length);
+    }
+
+    public byte[] getData() {
+        byte[] data = new byte[0];
+        data = Utils.combine(data, Utils.getIntToBytes(version, true));
+        if(witnessed) {
+            data = Utils.combine(data, new byte[] {0x00, 0x01});
+        }
+        data = Utils.combine(data, numInput.getBytes());
+        for(InputScript is : inScript) {
+            data = Utils.combine(data, is.getData());
+        }
+
+        data = Utils.combine(data, numOutput.getBytes());
+        for(OutputScript os : outScript) {
+            data = Utils.combine(data, os.getData());
+        }
+
+        if(witnessed) {
+            System.out.println("DARN");
+        }
+        data = Utils.combine(data, Utils.getIntToBytes(lockTime));
+        return data;
     }
 }

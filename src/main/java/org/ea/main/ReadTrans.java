@@ -45,6 +45,10 @@ public class ReadTrans {
                 Block block = new Block();
                 block.setData(inputData);
 
+                if(block.verifyMerkleRoot()) {
+                    System.out.println("ALL RIGHT");
+                }
+
                 fis.close();
 
                 break;

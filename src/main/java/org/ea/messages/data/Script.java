@@ -6,4 +6,8 @@ public class Script {
     public Script(byte[] script) {
         this.script = script;
     }
+
+    public byte[] getData() {
+        return script;
+    }
 }

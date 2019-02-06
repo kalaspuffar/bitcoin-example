@@ -1,5 +1,7 @@
 package org.ea.messages.data;
 
+import org.ea.main.Utils;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -22,5 +24,15 @@ public class InputScript {
         sequence = ByteBuffer.wrap(Arrays.copyOfRange(data, scriptEnd, scriptEnd+4)).getInt();
 
         return Arrays.copyOfRange(data, scriptEnd+4, data.length);
+    }
+
+    public byte[] getData() {
+        byte[] data = new byte[0];
+        data = Utils.combine(data, previousOutput);
+        data = Utils.combine(data, Utils.getIntToBytes(previousIndex));
+        data = Utils.combine(data, script_len.getBytes());
+        data = Utils.combine(data, script.getData());
+        data = Utils.combine(data, Utils.getIntToBytes(sequence));
+        return data;
     }
 }

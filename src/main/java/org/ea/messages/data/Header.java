@@ -105,6 +105,10 @@ public class Header implements Comparable<Header> {
         this.prevBlock = Utils.hex2Byte(prevBlock);
     }
 
+    public byte[] getMerkleRootBytes() {
+        return merkleRoot;
+    }
+
     public String getMerkleRoot() {
         return Utils.byte2hex(merkleRoot);
     }
