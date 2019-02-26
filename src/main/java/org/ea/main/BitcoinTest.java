@@ -119,11 +119,15 @@ public class BitcoinTest {
 
             int numRead;
             int count = 0;
+            int dup = 0;
             while((numRead = fis.read(buffer)) != -1) {
                 for(int i = 0; i < numRead / 80; i++) {
                     byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i+1) * 80);
                     String id = Utils.getId(headerBytes);
                     if (!Utils.findFileName(id)) {
+                        if(blocksToDownload.contains(id)) {
+                            dup++;
+                        }
                         blocksToDownload.add(id);
                     }
                 }
@@ -131,6 +135,8 @@ public class BitcoinTest {
                 count++;
                 if(count % 100 == 0) System.out.println();
             }
+
+            System.out.println("Num dups: " + dup);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -165,7 +171,6 @@ public class BitcoinTest {
 
                 long randomId = new Random().nextLong();
 
-
                 clientSocket = new Socket(ip, default_port);
                 OutputStream out = clientSocket.getOutputStream();
                 InputStream is = clientSocket.getInputStream();
@@ -180,30 +185,27 @@ public class BitcoinTest {
                 out.write(versionMsg.getByteData());
                 out.flush();
 
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
                 int nRead;
                 byte[] data = new byte[5 * 1024 * 1024];
+                byte[] workBuffer = new byte[0];
 
                 outer:
                 while ((nRead = is.read(data, 0, data.length)) != -1) {
-                    buffer.write(data, 0, nRead);
-                    byte[] magic = Arrays.copyOfRange(buffer.toByteArray(), 0, 4);
+                    workBuffer = Utils.combine(workBuffer, Arrays.copyOfRange(data, 0, nRead));
+                    byte[] magic = Arrays.copyOfRange(workBuffer, 0, 4);
 
                     byte[] currentBlock = new byte[0];
 
-                    while (buffer.size() > 0) {
+                    while (workBuffer.length > 0) {
                         if (Arrays.compare(magic, Utils.getIntToBytes(network)) == 0) {
-                            int length = ByteBuffer.wrap(Arrays.copyOfRange(buffer.toByteArray(), 16, 20))
+                            int length = ByteBuffer.wrap(Arrays.copyOfRange(workBuffer, 16, 20))
                                     .order(ByteOrder.LITTLE_ENDIAN)
                                     .getInt();
                             length += 24;
-                            if (buffer.size() < length) continue outer;
-                            currentBlock = Arrays.copyOfRange(buffer.toByteArray(), 0, length);
-                            if (buffer.size() >= length) {
-                                byte[] rest = Arrays.copyOfRange(buffer.toByteArray(), length, buffer.size());
-                                buffer.reset();
-                                buffer.write(rest);
+                            if (workBuffer.length < length) continue outer;
+                            currentBlock = Arrays.copyOfRange(workBuffer, 0, length);
+                            if (workBuffer.length >= length) {
+                                workBuffer = Arrays.copyOfRange(workBuffer, length, workBuffer.length);
                             }
                         }
 
@@ -272,15 +274,26 @@ public class BitcoinTest {
                                 out.flush();
                             }
                         } else if (reply instanceof Block) {
-                            String id = ((Block) reply).getId();
-                            if(Utils.findFileName(id)) {
-                                blocksToDownload.remove(id);
+                            Block b = ((Block) reply);
+                            try {
+                                b.updateData();
+                                if(b.verifyMerkleRoot()) {
+                                    b.writeData();
+                                    String id = b.getId();
+                                    if(Utils.findFileName(id)) {
+                                        blocksToDownload.remove(id);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
+
                             System.out.println("Blocks left in queue " + blocksToDownload.size());
 
                             Iterator<String> it = blocksToDownload.iterator();
                             Random rn = new Random();
                             int randomInt = rn.nextInt(blocksToDownload.size() + 1);
+                            String id = null;
                             for(int i=0; i<randomInt; i++) {
                                 id = it.next();
                             }

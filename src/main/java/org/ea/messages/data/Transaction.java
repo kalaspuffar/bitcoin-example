@@ -4,6 +4,7 @@ import jdk.jshell.execution.Util;
 import org.ea.main.Utils;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,8 +19,10 @@ public class Transaction {
     private List<Witness> witnesses = new ArrayList<>();
     private int lockTime;
 
-    public byte[] setData(byte[] data) {
-        version = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4)).getInt();
+    public byte[] setData(byte[] data) throws IllegalArgumentException {
+        version = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4))
+                    .order(ByteOrder.LITTLE_ENDIAN)
+                    .getInt();
         int scriptOffset = 4;
         if(data[5] == 0x00 && data[6] == 0x01) {
             witnessed = true;
@@ -47,7 +50,7 @@ public class Transaction {
             System.out.println("DARN!");
         }
 
-        System.out.println("In: "+ inScript.size() + " Out: " + outScript.size());
+//        System.out.println("In: "+ inScript.size() + " Out: " + outScript.size());
 
         lockTime = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4)).getInt();
 

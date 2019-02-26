@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ReadTrans {
@@ -17,44 +18,72 @@ public class ReadTrans {
 
         File dataDir = new File("data");
         File headersFile = new File(dataDir, "header.data");
+        int numOfHeaders = 0;
+        int numOfVerified = 0;
+        //List<String> incomplete = new ArrayList<>();
+        //List<String> incorrect = new ArrayList<>();
 
         try {
             FileInputStream headerFIS = new FileInputStream(headersFile);
-            byte[] headerBytes = new byte[80];
-            while (headerFIS.read(headerBytes) == 80) {
-                String id = new Header(headerBytes).getId();
-                //String id = Utils.reverse("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206");
-                //System.out.println(Utils.reverse("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"));
-                System.out.println(Utils.reverse(id));
-                System.out.println(id);
+            //byte[] headerBytes = new byte[80];
+            final int BUFFER_SIZE = 1024 * 1024;
+            byte[] data = new byte[BUFFER_SIZE];
+            byte[] buffer = new byte[800000];
 
-                File file = Utils.findFile(id);
+            int numRead;
+            while((numRead = headerFIS.read(buffer)) != -1) {
+                for(int i = 0; i < numRead / 80; i++) {
+                    byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i + 1) * 80);
 
-                FileInputStream fis = new FileInputStream(file);
-                final int BUFFER_SIZE = 1024 * 1024;
-                byte[] data = new byte[BUFFER_SIZE];
+                    //while (headerFIS.read(headerBytes) == 80) {
+                    String id = new Header(headerBytes).getId();
+                    //String id = "67391d93a161d82b8f968b7041a48507ace6bb30d4dfcc789e0b6f7b00000000";
+                    //System.out.println(Utils.reverse("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"));
+//                System.out.println(Utils.reverse(id));
+//                System.out.println(id);
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                int read;
-                do {
-                    read = fis.read(data);
-                    baos.write(data, 0, read);
-                } while (read == BUFFER_SIZE);
-                byte[] inputData = baos.toByteArray();
+                    File file = Utils.findFile(id);
 
-                Block block = new Block();
-                block.setData(inputData);
+                    if (file == null || !file.exists()) continue;
 
-                if(block.verifyMerkleRoot()) {
-                    System.out.println("ALL RIGHT");
+                    FileInputStream fis = new FileInputStream(file);
+
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    int read;
+                    do {
+                        read = fis.read(data);
+                        baos.write(data, 0, read);
+                    } while (read == BUFFER_SIZE);
+                    baos.close();
+                    byte[] inputData = baos.toByteArray();
+
+                    Block block = new Block();
+                    try {
+                        block.setData(inputData);
+
+                        if (block.verifyMerkleRoot()) {
+                            numOfVerified++;
+                        } else {
+                            //System.out.println("Incorrect: " + block.transSize());
+                            file.deleteOnExit();
+                        }
+                    } catch (Exception iae) {
+                        //System.out.println("Incomplete");
+                        file.deleteOnExit();
+                    }
+
+                    fis.close();
+                    numOfHeaders++;
+
+                    if (numOfHeaders % 10000 == 0) {
+                        System.out.println(numOfHeaders);
+                    }
                 }
-
-                fis.close();
-
-                break;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        System.out.println("Verified " + numOfVerified + " of " + numOfHeaders);
     }
 }

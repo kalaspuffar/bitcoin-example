@@ -11,11 +11,11 @@ public class OutputScript {
     private VarInt pk_script_len;
     private Script pk_script;
 
-    public byte[] setData(byte[] data) {
+    public byte[] setData(byte[] data) throws IllegalArgumentException {
         value = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 8))
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .getLong();
-        System.out.println(value);
+        //System.out.println(value);
         pk_script_len = new VarInt(Arrays.copyOfRange(data, 8, 12));
         int scriptOffset = pk_script_len.getNumBytes() + 8;
         pk_script = new Script(

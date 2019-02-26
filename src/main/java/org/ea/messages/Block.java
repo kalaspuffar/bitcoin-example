@@ -21,6 +21,13 @@ public class Block extends Reply {
     protected Block(byte[] msg) throws Exception{
         super(msg);
         blockHeader = new Header(data);
+    }
+
+    public void updateData() {
+        setData(data);
+    }
+
+    public void writeData() {
 
         try {
             byte[] idHash = Utils.dhash(Arrays.copyOfRange(data, 0, 80));
@@ -43,7 +50,7 @@ public class Block extends Reply {
         return blockHeader.getId();
     }
 
-    public void setData(byte[] data) {
+    public void setData(byte[] data) throws IllegalArgumentException {
         blockHeader = new Header(data);
         int len = blockHeader.getHeaderLen();
 
@@ -56,7 +63,7 @@ public class Block extends Reply {
             transData = trans.setData(transData);
             transactionList.add(trans);
         }
-        System.out.println(transData.length);
+        //System.out.println(transData.length);
     }
 
     private byte[] combineMerkle(List<Transaction> a) throws Exception {
@@ -65,8 +72,9 @@ public class Block extends Reply {
             if(a.size() % 2 == 1) {
                  size++;
             }
+
             byte[] merkle1 = combineMerkle(a.subList(0, size / 2));
-            byte[] merkle2 = combineMerkle(a.subList(size / 2, size));
+            byte[] merkle2 = combineMerkle(a.subList(size / 2, a.size()));
             return Utils.dhash(Utils.combine(merkle1, merkle2));
         } else if(a.size() == 2) {
             Transaction t1 = a.get(0);
@@ -77,28 +85,26 @@ public class Block extends Reply {
         } else {
             Transaction t = a.get(0);
             byte[] hash1 = Utils.dhash(t.getData());
-            byte[] hash2 = Utils.dhash(t.getData());
-            return Utils.dhash(Utils.combine(hash1, hash2));
+            return Utils.dhash(Utils.combine(hash1, hash1));
         }
     }
 
     public boolean verifyMerkleRoot() {
-
         try {
-            byte[] merkleToVerify = Utils.dhash(transactionList.get(0).getData());
+            byte[] merkleToVerify;
+            if(transactionList.size() == 1) {
+                merkleToVerify = Utils.dhash(transactionList.get(0).getData());
+            } else {
+                merkleToVerify = combineMerkle(transactionList);
+            }
             return Arrays.compare(merkleToVerify, blockHeader.getMerkleRootBytes()) == 0;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        /*
-        try {
-            byte[] merkleToVerify = combineMerkle(transactionList);
-            System.out.println(Utils.byte2hex(merkleToVerify));
-            System.out.println(blockHeader.getMerkleRoot());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        */
         return false;
+    }
+
+    public int transSize() {
+        return transactionList.size();
     }
 }
