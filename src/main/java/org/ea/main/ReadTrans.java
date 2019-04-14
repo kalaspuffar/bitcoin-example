@@ -37,7 +37,7 @@ public class ReadTrans {
 
                     //while (headerFIS.read(headerBytes) == 80) {
                     String id = new Header(headerBytes).getId();
-                    //String id = "67391d93a161d82b8f968b7041a48507ace6bb30d4dfcc789e0b6f7b00000000";
+                    //String id = "e17c5a88950d81e9024d713edf7a4220bb22ae662ca31938ced10dc900000000";
                     //System.out.println(Utils.reverse("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"));
 //                System.out.println(Utils.reverse(id));
 //                System.out.println(id);
@@ -64,8 +64,8 @@ public class ReadTrans {
                         if (block.verifyMerkleRoot()) {
                             numOfVerified++;
                         } else {
-                            //System.out.println("Incorrect: " + block.transSize());
-                            file.deleteOnExit();
+                            System.out.println("Incorrect: " + block.getId());
+                            //file.deleteOnExit();
                         }
                     } catch (Exception iae) {
                         //System.out.println("Incomplete");

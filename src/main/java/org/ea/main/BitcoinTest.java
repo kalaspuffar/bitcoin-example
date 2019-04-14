@@ -30,7 +30,7 @@ public class BitcoinTest {
 
     private static int network = 0x0709110B;
     private static Set<NetAddr> addresses = new HashSet<>();
-    private static Set<InvVector> invVectors = new HashSet<>();
+    //private static Set<InvVector> invVectors = new HashSet<>();
     private static Set<Header> headers = new HashSet<>();
 
     public static void readData(File dbFile) throws Exception {
@@ -47,6 +47,7 @@ public class BitcoinTest {
             }
         }
 
+        /*
         if(jsonDB.containsKey("inv")) {
             JSONArray invArr = (JSONArray) jsonDB.get("inv");
             for (Object iv : invArr) {
@@ -55,9 +56,10 @@ public class BitcoinTest {
                 ));
             }
         }
+        */
 
         System.out.println("Read " + addresses.size() + " addresses");
-        System.out.println("Read " + invVectors.size() + " vectors");
+        //System.out.println("Read " + invVectors.size() + " vectors");
 
         long numBlocks = 0;
         for(File f : Utils.getDataPath().listFiles()) {
@@ -81,11 +83,13 @@ public class BitcoinTest {
         for(NetAddr addr : addresses) {
             addressesJson.add(addr.getJSONObject());
         }
+        /*
         jsonDB.put("inv", new JSONArray());
         JSONArray invJson = (JSONArray) jsonDB.get("inv");
         for(InvVector iv : invVectors) {
             invJson.add(iv.getJSONObject());
         }
+        */
 
         FileWriter fw = new FileWriter(dbFile);
         if (jsonDB != null) {
@@ -95,7 +99,7 @@ public class BitcoinTest {
         fw.close();
 
         System.out.println("Wrote " + addresses.size() + " addresses");
-        System.out.println("Wrote " + invVectors.size() + " vectors");
+        //System.out.println("Wrote " + invVectors.size() + " vectors");
 
         long numBlocks = 0;
         for(File f : Utils.getDataPath().listFiles()) {
@@ -244,9 +248,11 @@ public class BitcoinTest {
                             out.write(((Ping) reply).getPongData());
                             out.flush();
                         } else if (reply instanceof Inv) {
+                            /*
                             List<InvVector> list = ((Inv) reply).getInvVectors();
                             invVectors.addAll(list);
                             writeData(dbFile);
+                            */
 
                             GetData getData = new GetData(network);
                             int count = 0;
@@ -278,11 +284,15 @@ public class BitcoinTest {
                             try {
                                 b.updateData();
                                 if(b.verifyMerkleRoot()) {
-                                    b.writeData();
-                                    String id = b.getId();
-                                    if(Utils.findFileName(id)) {
-                                        blocksToDownload.remove(id);
-                                    }
+                                    b.writeData(false);
+                                } else {
+                                    System.err.println("Incorrect merkle " + b.transSize());
+                                    b.writeData(true);
+                                }
+
+                                String id = b.getId();
+                                if(Utils.findFileName(id)) {
+                                    blocksToDownload.remove(id);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();

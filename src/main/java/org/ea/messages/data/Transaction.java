@@ -19,7 +19,10 @@ public class Transaction {
     private List<Witness> witnesses = new ArrayList<>();
     private int lockTime;
 
+    private byte[] dataIn;
+
     public byte[] setData(byte[] data) throws IllegalArgumentException {
+        dataIn = data;
         version = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4))
                     .order(ByteOrder.LITTLE_ENDIAN)
                     .getInt();
@@ -52,14 +55,21 @@ public class Transaction {
 
 //        System.out.println("In: "+ inScript.size() + " Out: " + outScript.size());
 
-        lockTime = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4)).getInt();
+        lockTime = ByteBuffer
+                .wrap(Arrays.copyOfRange(data, 0, 4))
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .getInt();
 
         return Arrays.copyOfRange(data, 4, data.length);
     }
 
+    public byte[] getDataIn() {
+        return dataIn;
+    }
+
     public byte[] getData() {
         byte[] data = new byte[0];
-        data = Utils.combine(data, Utils.getIntToBytes(version, true));
+        data = Utils.combine(data, Utils.getIntToBytes(version, false));
         if(witnessed) {
             data = Utils.combine(data, new byte[] {0x00, 0x01});
         }

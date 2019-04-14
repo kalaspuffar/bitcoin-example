@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Block extends Reply {
@@ -27,13 +28,13 @@ public class Block extends Reply {
         setData(data);
     }
 
-    public void writeData() {
+    public void writeData(boolean incorrect) {
 
         try {
             byte[] idHash = Utils.dhash(Arrays.copyOfRange(data, 0, 80));
             String id = Utils.byte2hex(idHash);
 
-            File blockDir = new File(Utils.getDataPath(), "blocks");
+            File blockDir = new File(Utils.getDataPath(), incorrect ? "incorrect" : "blocks");
             File dir = new File(blockDir, id.substring(0, 4));
             dir.mkdirs();
             File file = new File(dir, id);
@@ -66,6 +67,22 @@ public class Block extends Reply {
         //System.out.println(transData.length);
     }
 
+    private byte[] combineMerkleHashes(List<byte[]> hashes) throws Exception {
+        if (hashes.size() == 1) {
+            return hashes.get(0);
+        }
+        if (hashes.size() % 2 == 1) {
+            hashes.add(hashes.get(hashes.size() - 1));
+        }
+
+        List<byte[]> newHashes = new ArrayList<>();
+        for (int i = 0; i < hashes.size(); i += 2) {
+            byte[] dataToHash = Utils.combine(hashes.get(i), hashes.get(i + 1));
+            newHashes.add(Utils.dhash(dataToHash));
+        }
+        return combineMerkleHashes(newHashes);
+    }
+
     private byte[] combineMerkle(List<Transaction> a) throws Exception {
         if(a.size() > 2) {
             int size = a.size();
@@ -95,7 +112,11 @@ public class Block extends Reply {
             if(transactionList.size() == 1) {
                 merkleToVerify = Utils.dhash(transactionList.get(0).getData());
             } else {
-                merkleToVerify = combineMerkle(transactionList);
+                List<byte[]> hashes = new ArrayList<>();
+                for(Transaction a : transactionList) hashes.add(Utils.dhash(a.getData()));
+
+                merkleToVerify = combineMerkleHashes(hashes);
+//                merkleToVerify = combineMerkle(transactionList);
             }
             return Arrays.compare(merkleToVerify, blockHeader.getMerkleRootBytes()) == 0;
         } catch (Exception e) {

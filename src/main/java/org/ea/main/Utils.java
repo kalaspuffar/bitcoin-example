@@ -289,7 +289,7 @@ public class Utils {
     }
 
     public static File findFile(String id) {
-        File blockDir = new File(getDataPath(), "blocks");
+        File blockDir = new File(getDataPath(), "incorrect");
         if(!blockDir.exists()) return null;
         File dir = new File(blockDir, id.substring(0, 4));
         if(!dir.exists()) return null;

@@ -13,37 +13,60 @@ public class VarInt {
 
     public VarInt(long data) {
         if(data > Integer.MAX_VALUE) {
+            numBytes = 8;
             bytes = Utils.getLongToBytes(data);
         } else if(data > Short.MAX_VALUE) {
+            numBytes = 4;
             bytes = Utils.getIntToBytes((int)data);
         } else if(data > Byte.MAX_VALUE) {
+            numBytes = 2;
             bytes = Utils.getShortToBytes((short)data);
         } else {
+            numBytes = 1;
             bytes = new byte[] {(byte)data};
         }
         value = data;
     }
     public VarInt(byte[] data) {
         if((data[0] & 0xFF) == 0xFF) {
+            numBytes = 8;
             bytes = Arrays.copyOfRange(data, 1, 9);
+        } else if((data[0] & 0xFF) == 0xFE) {
+            numBytes = 4;
+            bytes = Arrays.copyOfRange(data, 1, 5);
+            byte[] padding = new byte[4];
+            Arrays.fill(padding, (byte) 0);
+            bytes = Utils.combine(bytes, padding);
+            /*
             value = ByteBuffer.wrap(bytes)
                     .order(ByteOrder.LITTLE_ENDIAN)
                     .getLong();
-        } else if((data[0] & 0xFF) == 0xFE) {
-            numBytes = 5;
-            bytes = Arrays.copyOfRange(data, 1, 5);
-            value = ByteBuffer.wrap(bytes)
-                    .order(ByteOrder.LITTLE_ENDIAN)
-                    .getInt();
+             */
         } else if((data[0] & 0xFF) == 0xFD) {
+            numBytes = 2;
             bytes = Arrays.copyOfRange(data, 1, 3);
+            byte[] padding = new byte[6];
+            Arrays.fill(padding, (byte) 0);
+            bytes = Utils.combine(bytes, padding);
+
+            /*
             value = ByteBuffer.wrap(bytes)
                     .order(ByteOrder.LITTLE_ENDIAN)
-                    .getShort();
+                    .getShort() & 0xFFFF;
+            */
         } else {
+            numBytes = 1;
             bytes = Arrays.copyOfRange(data, 0, 1);
-            value = data[0] & 0xFF;
+            byte[] padding = new byte[7];
+            Arrays.fill(padding, (byte) 0);
+            bytes = Utils.combine(bytes, padding);
+//            value = data[0] & 0xFF;
+
         }
+
+        value = ByteBuffer.wrap(bytes)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .getLong();
     }
 
     public long getValue() {
@@ -51,10 +74,10 @@ public class VarInt {
     }
 
     public int getNumBytes() {
-        return bytes.length;
+        return numBytes;
     }
 
     public byte[] getBytes() {
-        return bytes;
+        return Arrays.copyOfRange(bytes, 0, numBytes);
     }
 }

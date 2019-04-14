@@ -16,7 +16,7 @@ public class OutputScript {
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .getLong();
         //System.out.println(value);
-        pk_script_len = new VarInt(Arrays.copyOfRange(data, 8, 12));
+        pk_script_len = new VarInt(Arrays.copyOfRange(data, 8, data.length));
         int scriptOffset = pk_script_len.getNumBytes() + 8;
         pk_script = new Script(
                 Arrays.copyOfRange(data, scriptOffset, scriptOffset + (int)pk_script_len.getValue())

@@ -2,6 +2,7 @@ package org.ea.messages;
 
 import org.ea.main.Utils;
 
+import java.io.DataInputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
