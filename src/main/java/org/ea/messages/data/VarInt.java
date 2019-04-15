@@ -13,13 +13,13 @@ public class VarInt {
 
     public VarInt(long data) {
         if(data > Integer.MAX_VALUE) {
-            numBytes = 8;
+            numBytes = 9;
             bytes = Utils.getLongToBytes(data);
         } else if(data > Short.MAX_VALUE) {
-            numBytes = 4;
+            numBytes = 5;
             bytes = Utils.getIntToBytes((int)data);
         } else if(data > Byte.MAX_VALUE) {
-            numBytes = 2;
+            numBytes = 3;
             bytes = Utils.getShortToBytes((short)data);
         } else {
             numBytes = 1;
@@ -29,10 +29,10 @@ public class VarInt {
     }
     public VarInt(byte[] data) {
         if((data[0] & 0xFF) == 0xFF) {
-            numBytes = 8;
+            numBytes = 9;
             bytes = Arrays.copyOfRange(data, 1, 9);
         } else if((data[0] & 0xFF) == 0xFE) {
-            numBytes = 4;
+            numBytes = 5;
             bytes = Arrays.copyOfRange(data, 1, 5);
             byte[] padding = new byte[4];
             Arrays.fill(padding, (byte) 0);
@@ -43,7 +43,7 @@ public class VarInt {
                     .getLong();
              */
         } else if((data[0] & 0xFF) == 0xFD) {
-            numBytes = 2;
+            numBytes = 3;
             bytes = Arrays.copyOfRange(data, 1, 3);
             byte[] padding = new byte[6];
             Arrays.fill(padding, (byte) 0);

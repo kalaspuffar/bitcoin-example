@@ -163,6 +163,7 @@ public class Utils {
 
     public static void handleHeights(File headersFile, List<Header> list) throws Exception {
         if(list.size() == 0) return;
+
         String nextBlock = "43497FD7F826957108F4A30FD9CEC3AEBA79972084E90EAD01EA330900000000".toLowerCase();
         long currentHeight = 0;
 
@@ -185,6 +186,10 @@ public class Utils {
                 nextBlock = header.getId();
                 newHeaders.add(header);
             }
+        }
+
+        if(!headersFile.exists()) {
+            headersFile.createNewFile();
         }
 
         if(newHeaders.size() == 0 && list.size() > 0) {

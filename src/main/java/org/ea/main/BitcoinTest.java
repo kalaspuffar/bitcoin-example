@@ -117,32 +117,34 @@ public class BitcoinTest {
 
         Set<String> blocksToDownload = new HashSet<>();
 
-        try {
-            FileInputStream fis = new FileInputStream(headersFile);
-            byte[] buffer = new byte[800000];
+        if(headersFile.exists()) {
+            try {
+                FileInputStream fis = new FileInputStream(headersFile);
+                byte[] buffer = new byte[800000];
 
-            int numRead;
-            int count = 0;
-            int dup = 0;
-            while((numRead = fis.read(buffer)) != -1) {
-                for(int i = 0; i < numRead / 80; i++) {
-                    byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i+1) * 80);
-                    String id = Utils.getId(headerBytes);
-                    if (!Utils.findFileName(id)) {
-                        if(blocksToDownload.contains(id)) {
-                            dup++;
+                int numRead;
+                int count = 0;
+                int dup = 0;
+                while ((numRead = fis.read(buffer)) != -1) {
+                    for (int i = 0; i < numRead / 80; i++) {
+                        byte[] headerBytes = Arrays.copyOfRange(buffer, i * 80, (i + 1) * 80);
+                        String id = Utils.getId(headerBytes);
+                        if (!Utils.findFileName(id)) {
+                            if (blocksToDownload.contains(id)) {
+                                dup++;
+                            }
+                            blocksToDownload.add(id);
                         }
-                        blocksToDownload.add(id);
                     }
+                    System.out.print(".");
+                    count++;
+                    if (count % 100 == 0) System.out.println();
                 }
-                System.out.print(".");
-                count++;
-                if(count % 100 == 0) System.out.println();
-            }
 
-            System.out.println("Num dups: " + dup);
-        } catch (Exception e) {
-            e.printStackTrace();
+                System.out.println("Num dups: " + dup);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         long lastBlock = (headersFile.length() / 80);
