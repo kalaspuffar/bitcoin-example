@@ -68,8 +68,8 @@ public class ReadTrans {
                             //file.deleteOnExit();
                         }
                     } catch (Exception iae) {
-                        //System.out.println("Incomplete");
-                        file.deleteOnExit();
+                        System.out.println("Incomplete");
+                        //file.deleteOnExit();
                     }
 
                     fis.close();

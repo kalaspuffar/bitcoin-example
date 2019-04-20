@@ -110,21 +110,18 @@ public class Utils {
     }
 
     public static String byte2hex(byte[] b) {
-        String hs = "";
+        StringBuffer sb = new StringBuffer();
         String stmp;
         for (int n = 0; n < b.length; n++)
         {
             stmp = Integer.toHexString(b[n] & 0XFF);
             if (stmp.length() == 1) {
-                hs = hs + "0" + stmp;
+                sb.append("0").append(stmp);
             } else {
-                hs = hs + stmp;
-            }
-            if (n < b.length - 1) {
-                hs = hs + "";
+                sb.append(stmp);
             }
         }
-        return hs;
+        return sb.toString();
     }
 
     public static void main(String[] args) {

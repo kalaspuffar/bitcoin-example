@@ -141,6 +141,10 @@ public class NetAddr {
         return result;
     }
 
+    public boolean hasAddress() {
+        return ipv4[0] != 0;
+    }
+
     public String getHostIPv4() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.ipv4[0] & 0xFF);

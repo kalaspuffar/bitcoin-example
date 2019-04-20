@@ -18,8 +18,8 @@ import java.util.*;
 
 public class BitcoinTest {
     private static Socket clientSocket;
-    private static PrintWriter out;
-    private static BufferedReader in;
+    private static Set<String> blocksToDownload = new HashSet<>();
+    private static int lastReported;
 
     private static byte[] getCommand(String cmd) {
         byte[] res = new byte[12];
@@ -110,13 +110,7 @@ public class BitcoinTest {
         System.out.println("Blocks downloaded " + numBlocks);
     }
 
-    public static void main(String[] args) {
-        File dataDir = Utils.getDataPath();
-        File dbFile = new File(dataDir, "db.json");
-        File headersFile = new File(dataDir, "header.data");
-
-        Set<String> blocksToDownload = new HashSet<>();
-
+    public static void readBlocksToRead(File headersFile) {
         if(headersFile.exists()) {
             try {
                 FileInputStream fis = new FileInputStream(headersFile);
@@ -146,34 +140,47 @@ public class BitcoinTest {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static void main(String[] args) {
+        File dataDir = Utils.getDataPath();
+        File dbFile = new File(dataDir, "db.json");
+        File headersFile = new File(dataDir, "header.data");
 
         long lastBlock = (headersFile.length() / 80);
         System.out.println("\nHave " + lastBlock + " headers");
 
+        int connectionsDone = 11;
         while(true) {
+            lastBlock = (headersFile.length() / 80);
+            System.out.println("\nHave " + lastBlock + " headers");
+
             try {
                 if(!dataDir.exists()) dataDir.mkdir();
                 if(!dbFile.exists()) dbFile.createNewFile();
 
+                if(connectionsDone > 10) {
+                    readBlocksToRead(headersFile);
+                    connectionsDone = 0;
+                }
+                connectionsDone++;
                 readData(dbFile);
 
-                String ip = null;
-                short default_port = 18333;
                 if (addresses.size() < 20) {
                     InetAddress dnsresult[] = InetAddress.getAllByName("seed.tbtc.petertodd.org");
                     for (int i = 0; i < dnsresult.length; i++) {
-                        if (dnsresult[i].getHostAddress().startsWith("1")) {
-                            ip = dnsresult[i].getHostAddress();
-                        }
+                        NetAddr netAddr = new NetAddr();
+                        netAddr.setIpv4(dnsresult[i].getHostAddress());
+                        netAddr.setPort((short) 18333);
+                        addresses.add(netAddr);
                     }
-                } else {
-                    int addressId = new Random().nextInt(addresses.size());
-                    NetAddr netAddr = addresses.toArray(
-                            new NetAddr[addresses.size()]
-                    )[addressId];
-                    ip = netAddr.getHostIPv4();
-                    default_port = netAddr.getPort();
                 }
+                int addressId = new Random().nextInt(addresses.size());
+                NetAddr netAddr = addresses.toArray(
+                        new NetAddr[addresses.size()]
+                )[addressId];
+                String ip = netAddr.getHostIPv4();
+                short default_port = netAddr.getPort();
 
                 long randomId = new Random().nextLong();
 
@@ -182,7 +189,7 @@ public class BitcoinTest {
                 InputStream is = clientSocket.getInputStream();
 
                 Version versionMsg = new Version();
-                versionMsg.setVersion(70015);
+                versionMsg.setVersion(70013);
                 versionMsg.setTimestamp(Instant.now().getEpochSecond());
                 versionMsg.setNodeId(Utils.getLongToBytes(randomId));
                 versionMsg.setLastBlock((int)lastBlock);
@@ -217,6 +224,7 @@ public class BitcoinTest {
 
                         Reply reply = Reply.build(currentBlock);
                         if (reply instanceof Version) {
+                            lastReported = ((Version)reply).getLastBlock();
                             Verack verackMsg = new Verack(network);
                             out.write(verackMsg.getByteData());
                             out.flush();
@@ -225,27 +233,27 @@ public class BitcoinTest {
                             out.write(sendHeaders.getByteData());
                             out.flush();
                         } else if (reply instanceof SendHeaders) {
-
-                            GetHeaders getHeadersMsg = new GetHeaders(network);
-                            List<Header> headLocators = Utils.blockLocator(headersFile);
-                            for (Header head : headLocators) {
-                                getHeadersMsg.addHash(head.getId());
+                            if(lastBlock < lastReported) {
+                                GetHeaders getHeadersMsg = new GetHeaders(network);
+                                List<Header> headLocators = Utils.blockLocator(headersFile);
+                                for (Header head : headLocators) {
+                                    getHeadersMsg.addHash(head.getId());
+                                }
+                                out.write(getHeadersMsg.getByteData());
+                                out.flush();
+                            } else {
+                                GetData getData = new GetData(network);
+                                int count = 0;
+                                Iterator<String> it = blocksToDownload.iterator();
+                                while(it.hasNext()) {
+                                    String id = it.next();
+                                    if(count > 10) break;
+                                    getData.addVector(new InvVector(2, id));
+                                    count++;
+                                }
+                                out.write(getData.getByteData());
+                                out.flush();
                             }
-                            out.write(getHeadersMsg.getByteData());
-                            out.flush();
-
-                            GetData getData = new GetData(network);
-                            int count = 0;
-                            Iterator<String> it = blocksToDownload.iterator();
-                            while(it.hasNext()) {
-                                String id = it.next();
-                                if(count > 1000) break;
-                                getData.addVector(new InvVector(2, id));
-                                count++;
-                            }
-                            out.write(getData.getByteData());
-                            out.flush();
-                            System.out.println("Blocks left in queue " + blocksToDownload.size());
                         } else if (reply instanceof Ping) {
                             out.write(((Ping) reply).getPongData());
                             out.flush();
@@ -261,7 +269,7 @@ public class BitcoinTest {
                             Iterator<String> it = blocksToDownload.iterator();
                             while(it.hasNext()) {
                                 String id = it.next();
-                                if(count > 1000) break;
+                                if(count > 10) break;
                                 getData.addVector(new InvVector(2, id));
                                 count++;
                             }
@@ -280,6 +288,18 @@ public class BitcoinTest {
                                 }
                                 out.write(getHeadersMsg.getByteData());
                                 out.flush();
+                            } else {
+                                GetData getData = new GetData(network);
+                                int count = 0;
+                                Iterator<String> it = blocksToDownload.iterator();
+                                while (it.hasNext()) {
+                                    String id = it.next();
+                                    if (count > 10) break;
+                                    getData.addVector(new InvVector(2, id));
+                                    count++;
+                                }
+                                out.write(getData.getByteData());
+                                out.flush();
                             }
                         } else if (reply instanceof Block) {
                             Block b = ((Block) reply);
@@ -291,30 +311,12 @@ public class BitcoinTest {
                                     System.err.println("Incorrect merkle " + b.transSize());
                                     b.writeData(true);
                                 }
-
                                 String id = b.getId();
-                                if(Utils.findFileName(id)) {
-                                    blocksToDownload.remove(id);
-                                }
+                                blocksToDownload.remove(id);
                             } catch (Exception e) {
                                 e.printStackTrace();
+                                b.writeData(true);
                             }
-
-                            System.out.println("Blocks left in queue " + blocksToDownload.size());
-
-                            Iterator<String> it = blocksToDownload.iterator();
-                            Random rn = new Random();
-                            int randomInt = rn.nextInt(blocksToDownload.size() + 1);
-                            String id = null;
-                            for(int i=0; i<randomInt; i++) {
-                                id = it.next();
-                            }
-
-                            GetData getData = new GetData(network);
-                            getData.addVector(new InvVector(2, id));
-                            out.write(getData.getByteData());
-                            out.flush();
-
                         } else if (reply instanceof Addr) {
                             addresses.addAll(((Addr) reply).getAddresses());
                             writeData(dbFile);
@@ -329,6 +331,8 @@ public class BitcoinTest {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
+                System.out.println("Blocks left in queue " + blocksToDownload.size());
+
                 try {
                     writeData(dbFile);
                 } catch (Exception e) {

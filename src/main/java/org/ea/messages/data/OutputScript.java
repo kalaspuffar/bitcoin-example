@@ -17,9 +17,10 @@ public class OutputScript {
                 .getLong();
         //System.out.println(value);
         pk_script_len = new VarInt(Arrays.copyOfRange(data, 8, data.length));
+
         int scriptOffset = pk_script_len.getNumBytes() + 8;
         pk_script = new Script(
-                Arrays.copyOfRange(data, scriptOffset, scriptOffset + (int)pk_script_len.getValue())
+            Arrays.copyOfRange(data, scriptOffset, scriptOffset + (int)pk_script_len.getValue())
         );
         return Arrays.copyOfRange(data, scriptOffset + (int)pk_script_len.getValue(), data.length);
     }
